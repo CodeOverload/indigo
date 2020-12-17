@@ -1,2 +1,6 @@
 **/target
 */.gitignore
+.classpath
+.project
+.settings
+.vscode
