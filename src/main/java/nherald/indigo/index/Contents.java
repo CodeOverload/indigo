@@ -26,6 +26,11 @@ public class Contents
         map = new HashMap<>(2001);
     }
 
+    /**
+     * Adds an association between an entity and a segment
+     * @param entityId entity id
+     * @param segmentId segmentid
+     */
     public void add(long entityId, String segmentId)
     {
         final Set<String> segments = getSegments(entityId);
@@ -33,11 +38,20 @@ public class Contents
         segments.add(segmentId);
     }
 
+    /**
+     * Get the set of segments associated with a particular entity
+     * @param entityId entity id
+     * @return the associated segments
+     */
     public Set<String> get(long entityId)
     {
         return Collections.unmodifiableSet(getSegments(entityId));
     }
 
+    /**
+     * Completely removes all associations for a particular entity
+     * @param entityId entity id
+     */
     public void remove(long entityId)
     {
         map.remove(entityId);
