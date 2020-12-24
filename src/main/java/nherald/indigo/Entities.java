@@ -27,13 +27,13 @@ public class Entities<T extends Entity>
 
     private final EntitiesInfo info;
 
-    public Entities(Class<T> entityType, Collection<IndexOptions<T>> indexOptions,
+    public Entities(Class<T> entityType, Collection<Index<T>> indices,
         Store store)
     {
         this.entityType = entityType;
         this.store = store;
 
-        this.indices = initIndices(indexOptions, store);
+        this.indices = indices;
 
         info = loadInfo();
     }
@@ -128,15 +128,6 @@ public class Entities<T extends Entity>
 
         indices.stream()
             .forEach(index -> index.remove(id, batch));
-    }
-
-    private Collection<Index<T>> initIndices(Collection<IndexOptions<T>> options,
-        Store store)
-    {
-        // Create an index for each of the specified indices
-        return options.stream()
-            .map(o -> new Index<T>(o, store))
-            .collect(Collectors.toList());
     }
 
     private long generateId(BatchUpdate batch)
