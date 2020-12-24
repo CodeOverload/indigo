@@ -11,7 +11,6 @@ import nherald.indigo.index.IndexBehaviour;
 import nherald.indigo.index.IndexOptions;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
-import nherald.indigo.store.StoreFactory;
 import nherald.indigo.uow.BatchUpdate;
 
 public class Entities<T extends Entity>
@@ -29,10 +28,10 @@ public class Entities<T extends Entity>
     private final EntitiesInfo info;
 
     public Entities(Class<T> entityType, Collection<IndexOptions<T>> indexOptions,
-        StoreFactory storeFactory)
+        Store store)
     {
         this.entityType = entityType;
-        this.store = storeFactory.get();
+        this.store = store;
 
         this.indices = initIndices(indexOptions, store);
 
