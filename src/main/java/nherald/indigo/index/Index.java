@@ -29,27 +29,37 @@ public class Index<T extends Entity>
 {
     private static final String NAMESPACE = "indices";
 
-    private final IndexOptions<T> options;
+    private final String id;
+    private final IndexTarget<T> target;
+    private final IndexBehaviour behaviour;
     private final Store store;
 
     private final Map<String, IndexSegment> cache = new HashMap<>(201);
 
     private Contents cachedContents;
 
-    public Index(IndexOptions<T> options, Store store)
+    public Index(String id, IndexTarget<T> target, 
+        IndexBehaviour behaviour, Store store)
     {
-        this.options = options;
+        this.id = id;
+        this.target = target;
+        this.behaviour = behaviour;
         this.store = store;
     }
 
     public String getId()
     {
-        return options.getId();
+        return id;
     }
 
-    public IndexOptions<T> getOptions()
+    public IndexTarget<T> getTarget()
     {
-        return options;
+        return target;
+    }
+
+    public IndexBehaviour getBehaviour()
+    {
+        return behaviour;
     }
 
     public Set<Long> get(String word)

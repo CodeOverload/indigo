@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import nherald.indigo.index.Index;
 import nherald.indigo.index.BasicTokeniser;
 import nherald.indigo.index.IndexBehaviour;
-import nherald.indigo.index.IndexOptions;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.uow.BatchUpdate;
@@ -163,10 +162,8 @@ public class Entities<T extends Entity>
     {
         final BasicTokeniser tokeniser = new BasicTokeniser();
 
-        final IndexOptions<T> options = index.getOptions();
-
-        final IndexBehaviour behaviour = options.getBehaviour();
-        final String text = options.getTarget().getTextFromEntity(entity);
+        final IndexBehaviour behaviour = index.getBehaviour();
+        final String text = index.getTarget().getTextFromEntity(entity);
 
         tokeniser.tokenise(text)
             .map(behaviour::sanitise)
