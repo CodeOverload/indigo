@@ -7,6 +7,7 @@ import java.util.stream.Stream;
  * to implementations how words are handled; some may apply filters,
  * some may apply transformations, most will be a mixture of the two
  */
+@FunctionalInterface
 public interface WordFilter
 {
     /**

@@ -14,7 +14,6 @@ import org.mockito.junit.jupiter.MockitoSettings;
 
 import static org.mockito.Mockito.*;
 
-import nherald.indigo.index.BasicIndexBehaviour;
 import nherald.indigo.index.Index;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
@@ -48,15 +47,11 @@ public class EntitiesTests
     private Entities<TestEntity> subject;
 
     @BeforeEach
-    public void before()
+    void before()
     {
         when(index1.getTarget()).thenReturn(entity -> "wordA wordB");
         when(index2.getTarget()).thenReturn(entity -> "wordC");
         when(index3.getTarget()).thenReturn(entity -> "wordD");
-
-        when(index1.getBehaviour()).thenReturn(new BasicIndexBehaviour());
-        when(index2.getBehaviour()).thenReturn(new BasicIndexBehaviour());
-        when(index3.getBehaviour()).thenReturn(new BasicIndexBehaviour());
 
         when(index1.getId()).thenReturn("index1");
         when(index2.getId()).thenReturn("index2");
@@ -72,7 +67,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void get_looksUpCorrectIdAndType()
+    void get_looksUpCorrectIdAndType()
     {
         subject.get(34);
 
@@ -80,7 +75,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void getMultiple_looksUpAllIds()
+    void getMultiple_looksUpAllIds()
     {
         final List<Long> ids = List.of(25l, 12l);
 
@@ -92,7 +87,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void search_searchesCorrectIndex()
+    void search_searchesCorrectIndex()
     {
         subject.search("index2", WORD1);
 
@@ -103,7 +98,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void search_exceptionWhenUnknownIndexSpecified()
+    void search_exceptionWhenUnknownIndexSpecified()
     {
         Assertions.assertThrows(StoreException.class, () -> {
             subject.search("index_id_that_doesnt_exist", WORD1);
@@ -111,7 +106,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_generatesNewId_forNewEntity()
+    void put_generatesNewId_forNewEntity()
     {
         when(store.startBatch()).thenReturn(batch);
 
@@ -123,7 +118,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_generatesNewId_forNewEntities()
+    void put_generatesNewId_forNewEntities()
     {
         when(store.startBatch()).thenReturn(batch);
 
@@ -137,7 +132,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_generatesNewId_forNewEntity_storeCompletelyEmpty()
+    void put_generatesNewId_forNewEntity_storeCompletelyEmpty()
     {
         // Create a completely empty Store instance (crucially, this doesn't have an info object
         // stored to denote which is the next id)
@@ -159,7 +154,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_usesEntityId_forExistingEntity()
+    void put_usesEntityId_forExistingEntity()
     {
         final Long id = 45l;
 
@@ -178,7 +173,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_addsToStore_forNewEntity()
+    void put_addsToStore_forNewEntity()
     {
         when(store.startBatch()).thenReturn(batch);
 
@@ -189,7 +184,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_addsToStore_forNewEntities()
+    void put_addsToStore_forNewEntities()
     {
         when(store.startBatch()).thenReturn(batch);
 
@@ -204,7 +199,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_addsToStore_forExistingEntity()
+    void put_addsToStore_forExistingEntity()
     {
         when(store.startBatch()).thenReturn(batch);
 
@@ -220,7 +215,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_addsToAllIndices_forNewEntity()
+    void put_addsToAllIndices_forNewEntity()
     {
         when(store.startBatch()).thenReturn(batch);
 
@@ -239,7 +234,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_addsToAllIndices_forExistingEntity()
+    void put_addsToAllIndices_forExistingEntity()
     {
         when(store.startBatch()).thenReturn(batch);
 
@@ -261,7 +256,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_doesntTryToDeleteOld_forNewEntity()
+    void put_doesntTryToDeleteOld_forNewEntity()
     {
         when(store.startBatch()).thenReturn(batch);
 
@@ -273,7 +268,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_deletesOld_forExistingEntity()
+    void put_deletesOld_forExistingEntity()
     {
         final Long id = 45l;
 
@@ -291,7 +286,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_deletesOldFromAllIndices_forExistingEntity()
+    void put_deletesOldFromAllIndices_forExistingEntity()
     {
         final Long id = 45l;
 
@@ -312,7 +307,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_deletesOldThenReAddToStore_forExistingEntity()
+    void put_deletesOldThenReAddToStore_forExistingEntity()
     {
         final Long id = 45l;
 
@@ -335,7 +330,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_deletesOldThenReAddToIndices_forExistingEntity()
+    void put_deletesOldThenReAddToIndices_forExistingEntity()
     {
         final Long id = 45l;
 
@@ -361,7 +356,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_commitsAllChangesInOneBatch()
+    void put_commitsAllChangesInOneBatch()
     {
         when(store.startBatch()).thenReturn(batch);
 
@@ -385,7 +380,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void put_failsIfEntityIsntInStorage_forExistingEntity()
+    void put_failsIfEntityIsntInStorage_forExistingEntity()
     {
         final Long id = 45l;
 
@@ -404,7 +399,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void delete_failsIfEntityIsntInStorage()
+    void delete_failsIfEntityIsntInStorage()
     {
         final Long id = 45l;
 
@@ -419,7 +414,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void delete_removesFromStorage()
+    void delete_removesFromStorage()
     {
         final Long id = 45l;
 
@@ -434,7 +429,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void delete_removesFromAllIndices()
+    void delete_removesFromAllIndices()
     {
         final Long id = 45l;
 
@@ -451,7 +446,7 @@ public class EntitiesTests
     }
 
     @Test
-    public void delete_commitsAllChangesInOneBatch()
+    void delete_commitsAllChangesInOneBatch()
     {
         when(store.startBatch()).thenReturn(batch);
 
