@@ -1,5 +1,6 @@
 package nherald.indigo.index;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -38,7 +39,7 @@ public class Index<T extends Entity>
 
     private Contents cachedContents;
 
-    public Index(String id, IndexTarget<T> target, 
+    public Index(String id, IndexTarget<T> target,
         IndexBehaviour behaviour, Store store)
     {
         this.id = id;
@@ -69,13 +70,22 @@ public class Index<T extends Entity>
         return segment.get(word);
     }
 
-    public void add(String word, long entityId, BatchUpdate batch)
+    public void add(Collection<String> words, long entityId, BatchUpdate batch)
     {
-        final IndexSegment segment = getSegmentForWord(word);
+        words.stream()
+            .map(behaviour::sanitise)
+            .filter(behaviour::includeInIndex)
+            .flatMap(behaviour::ngram)
+            .forEach(prefix -> add(prefix, entityId, batch));
+    }
 
-        segment.add(word, entityId);
+    private void add(String prefix, long entityId, BatchUpdate batch)
+    {
+        final IndexSegment segment = getSegmentForWord(prefix);
 
-        final String segmentId = getSegmentId(word);
+        segment.add(prefix, entityId);
+
+        final String segmentId = getSegmentId(prefix);
 
         store.put(NAMESPACE, getStoreId(segmentId), segment, batch);
 

@@ -2,12 +2,12 @@ package nherald.indigo;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import nherald.indigo.index.Index;
 import nherald.indigo.index.BasicTokeniser;
-import nherald.indigo.index.IndexBehaviour;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.uow.BatchUpdate;
@@ -162,13 +162,10 @@ public class Entities<T extends Entity>
     {
         final BasicTokeniser tokeniser = new BasicTokeniser();
 
-        final IndexBehaviour behaviour = index.getBehaviour();
         final String text = index.getTarget().getTextFromEntity(entity);
 
-        tokeniser.tokenise(text)
-            .map(behaviour::sanitise)
-            .filter(behaviour::includeInIndex)
-            .flatMap(behaviour::ngram)
-            .forEach(prefix -> index.add(prefix, entity.getId(), batch));
+        final List<String> words = tokeniser.tokenise(text);
+
+        index.add(words, entity.getId(), batch);
     }
 }
