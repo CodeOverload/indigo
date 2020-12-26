@@ -2,7 +2,7 @@ package nherald.indigo.index;
 
 import java.util.stream.Stream;
 
-public class BasicIndexBehaviour implements IndexBehaviour
+public class BasicWordFilter implements WordFilter
 {
     /*
         When indexing   Tomato Bo O'Neill her ->
@@ -24,26 +24,22 @@ public class BasicIndexBehaviour implements IndexBehaviour
                             then search index separately for each of these terms; oneil, tomato  (no ngram)
     */
 
-    @Override
     public String sanitise(String word)
     {
         return word.replaceAll("[^a-zA-Z0-9]+", "")
             .toLowerCase();
     }
 
-    @Override
-    public boolean includeInIndex(String word)
+    private boolean includeInIndex(String word)
     {
         return includeInSearch(word) && !StopWords.isStopWord(word);
     }
 
-    @Override
     public boolean includeInSearch(String word)
     {
         return isWordLongEnough(word) && wordStartsWithLetter(word);
     }
 
-    @Override
     public Stream<String> ngram(String word)
     {
         final String[] result = new String[word.length() - 3 + 1];
@@ -65,5 +61,14 @@ public class BasicIndexBehaviour implements IndexBehaviour
     {
         // Note that this must be applied after isWordLongEnough
         return Character.isAlphabetic(word.charAt(0));
+    }
+
+    @Override
+    public Stream<String> process(String word)
+    {
+        return Stream.of(word)
+            .map(this::sanitise)
+            .filter(this::includeInIndex)
+            .flatMap(this::ngram);
     }
 }

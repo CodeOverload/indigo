@@ -32,7 +32,7 @@ public class Index<T extends Entity>
 
     private final String id;
     private final IndexTarget<T> target;
-    private final IndexBehaviour behaviour;
+    private final WordFilter wordFilter;
     private final Store store;
 
     private final Map<String, IndexSegment> cache = new HashMap<>(201);
@@ -40,11 +40,11 @@ public class Index<T extends Entity>
     private Contents cachedContents;
 
     public Index(String id, IndexTarget<T> target,
-        IndexBehaviour behaviour, Store store)
+        WordFilter wordFilter, Store store)
     {
         this.id = id;
         this.target = target;
-        this.behaviour = behaviour;
+        this.wordFilter = wordFilter;
         this.store = store;
     }
 
@@ -58,11 +58,6 @@ public class Index<T extends Entity>
         return target;
     }
 
-    public IndexBehaviour getBehaviour()
-    {
-        return behaviour;
-    }
-
     public Set<Long> get(String word)
     {
         final IndexSegment segment = getSegmentForWord(word);
@@ -73,9 +68,7 @@ public class Index<T extends Entity>
     public void add(Collection<String> words, long entityId, BatchUpdate batch)
     {
         words.stream()
-            .map(behaviour::sanitise)
-            .filter(behaviour::includeInIndex)
-            .flatMap(behaviour::ngram)
+            .flatMap(wordFilter::process)
             .forEach(prefix -> add(prefix, entityId, batch));
     }
 
