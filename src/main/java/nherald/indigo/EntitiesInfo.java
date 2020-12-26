@@ -6,7 +6,12 @@ public class EntitiesInfo
 
     public EntitiesInfo()
     {
-        maxId = 0;
+        this(0);
+    }
+
+    public EntitiesInfo(long maxId)
+    {
+        this.maxId = maxId;
     }
 
     public long getMaxId()
