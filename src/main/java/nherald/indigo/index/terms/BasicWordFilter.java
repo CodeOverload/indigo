@@ -51,7 +51,7 @@ public class BasicWordFilter implements WordFilter
             .toLowerCase();
     }
 
-    private boolean includeInIndex(String word)
+    public boolean includeInIndex(String word)
     {
         return includeInSearch(word) &&
             !(filterStopWords && StopWords.isStopWord(word));
