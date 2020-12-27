@@ -420,7 +420,6 @@ public class EntitiesTests
 
         when(store.startBatch()).thenReturn(batch);
 
-        // No entity of this id is in the store
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
         subject.delete(id);
@@ -435,7 +434,6 @@ public class EntitiesTests
 
         when(store.startBatch()).thenReturn(batch);
 
-        // No entity of this id is in the store
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
         subject.delete(id);
