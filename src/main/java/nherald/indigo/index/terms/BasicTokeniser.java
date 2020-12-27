@@ -1,4 +1,4 @@
-package nherald.indigo.index;
+package nherald.indigo.index.terms;
 
 import java.util.List;
 

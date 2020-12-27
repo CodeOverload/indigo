@@ -1,9 +1,9 @@
-package nherald.indigo.index;
+package nherald.indigo.index.terms;
 
 import java.util.stream.Stream;
 
 /**
- * Capable of processing words prior to them being added to the index. It's up
+ * Processes words prior to them being added to the index. It's up
  * to implementations how words are handled; some may apply filters,
  * some may apply transformations, most will be a mixture of the two
  */

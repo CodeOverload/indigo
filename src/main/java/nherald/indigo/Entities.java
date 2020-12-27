@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import nherald.indigo.index.Index;
-import nherald.indigo.index.BasicTokeniser;
+import nherald.indigo.index.terms.BasicTokeniser;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.uow.BatchUpdate;

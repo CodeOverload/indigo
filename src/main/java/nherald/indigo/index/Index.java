@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import nherald.indigo.Entity;
+import nherald.indigo.index.terms.WordFilter;
 import nherald.indigo.store.IdValidator;
 import nherald.indigo.store.Store;
 import nherald.indigo.uow.BatchUpdate;

@@ -1,13 +1,15 @@
-package nherald.indigo.index;
+package nherald.indigo.index.terms;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Stop word filter, based on a standard/generic set of stop words
+ */
 public class StopWords
 {
     private static final String[] STOP_WORDS = {
-        // Words from a standard word list
         "a", "about", "above", "after", "again", "against", "ain", "all",
         "am", "an", "and", "any", "are", "aren", "aren't", "as", "at", "be", "because", "been", "before", "being",
         "below", "between", "both", "but", "by", "can", "couldn", "couldn't", "d", "did", "didn", "didn't", "do",
