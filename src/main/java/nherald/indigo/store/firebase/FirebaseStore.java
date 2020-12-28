@@ -6,23 +6,20 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
-import com.google.firebase.cloud.FirestoreClient;
-
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
+import nherald.indigo.store.firebase.db.FirebaseDatabase;
+import nherald.indigo.store.firebase.db.FirebaseDocument;
+import nherald.indigo.store.firebase.db.FirebaseDocumentId;
 import nherald.indigo.uow.BatchUpdate;
 
 public class FirebaseStore implements Store
 {
-    private final Firestore database;
+    private final FirebaseDatabase database;
 
-    public FirebaseStore()
+    public FirebaseStore(FirebaseDatabase database)
     {
-        database = FirestoreClient.getFirestore();
+        this.database = database;
     }
 
     @Override
@@ -34,20 +31,19 @@ public class FirebaseStore implements Store
     @Override
     public <T> List<T> get(String namespace, Collection<String> ids, Class<T> itemType)
     {
+        final List<FirebaseDocumentId> docIds = ids.stream()
+            .map(id -> new FirebaseDocumentId(namespace, id))
+            .collect(Collectors.toList());
+
         try
         {
-            final DocumentReference[] docsRefs = ids.stream()
-                .map(id -> database.collection(namespace).document(id))
-                .toArray(DocumentReference[]::new);
+            final List<FirebaseDocument> docs = database.getAll(docIds);
 
-            ApiFuture<List<DocumentSnapshot>> future = database.getAll(docsRefs);
-
-            return future.get()
-                .stream()
+            return docs.stream()
                 .map(doc -> {
                     if (!doc.exists()) return null;
 
-                    return doc.toObject(itemType);
+                    return doc.asObject(itemType);
                 })
                 .collect(Collectors.toList());
         }
@@ -60,12 +56,12 @@ public class FirebaseStore implements Store
     @Override
     public boolean exists(String namespace, String id)
     {
+        final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, id);
+
         try
         {
-            DocumentReference doc = database.collection(namespace).document(id);
-            ApiFuture<DocumentSnapshot> future = doc.get();
+            final FirebaseDocument document = database.get(docId);
 
-            DocumentSnapshot document = future.get();
             return document.exists();
         }
         catch (InterruptedException | ExecutionException ex)

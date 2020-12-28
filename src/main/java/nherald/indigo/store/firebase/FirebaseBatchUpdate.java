@@ -8,14 +8,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.WriteBatch;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nherald.indigo.store.StoreException;
+import nherald.indigo.store.firebase.db.FirebaseBatch;
+import nherald.indigo.store.firebase.db.FirebaseDatabase;
+import nherald.indigo.store.firebase.db.FirebaseDocumentId;
 import nherald.indigo.uow.BatchUpdate;
 
 /**
@@ -39,33 +38,31 @@ public class FirebaseBatchUpdate implements BatchUpdate
 
     private static final int BATCH_SIZE = 500;
 
-    private final Firestore database;
+    private final FirebaseDatabase database;
 
     private final Map<String, Update> pending = new HashMap<>(203);
 
-    public FirebaseBatchUpdate(Firestore database)
+    public FirebaseBatchUpdate(FirebaseDatabase database)
     {
         this.database = database;
     }
 
     public <T> void put(String namespace, String entityId, T entity)
     {
-        final DocumentReference ref = database.collection(namespace)
-            .document(entityId);
+        final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);
 
         final String mapKey = getMapKey(namespace, entityId);
 
-        pending.put(mapKey, batch -> batch.set(ref, entity));
+        pending.put(mapKey, batch -> batch.set(docId, entity));
     }
 
     public void delete(String namespace, String entityId)
     {
-        final DocumentReference ref = database.collection(namespace)
-            .document(entityId);
+        final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);
 
         final String mapKey = getMapKey(namespace, entityId);
 
-        pending.put(mapKey, batch -> batch.delete(ref));
+        pending.put(mapKey, batch -> batch.delete(docId));
     }
 
     @Override
@@ -92,7 +89,7 @@ public class FirebaseBatchUpdate implements BatchUpdate
 
     private void commitChunk(List<Entry<String, Update>> chunk)
     {
-        final WriteBatch batch = database.batch();
+        final FirebaseBatch batch = database.batch();
 
         chunk.stream()
             .forEach(e -> apply(e.getKey(), e.getValue(), batch));
@@ -100,7 +97,7 @@ public class FirebaseBatchUpdate implements BatchUpdate
         logger.info("Committing batch of size {}", chunk.size());
         try
         {
-            batch.commit().get();
+            batch.commit();
         }
         catch (InterruptedException | ExecutionException ex)
         {
@@ -108,7 +105,7 @@ public class FirebaseBatchUpdate implements BatchUpdate
         }
     }
 
-    private void apply(String key, Update update, WriteBatch batch)
+    private void apply(String key, Update update, FirebaseBatch batch)
     {
         logger.info("Adding update to batch: {}", key);
 
@@ -118,6 +115,6 @@ public class FirebaseBatchUpdate implements BatchUpdate
     @FunctionalInterface
     private static interface Update
     {
-        void apply(WriteBatch batch);
+        void apply(FirebaseBatch batch);
     }
 }
