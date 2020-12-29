@@ -3,6 +3,7 @@ package nherald.indigo.store;
 import java.util.Collection;
 import java.util.List;
 
+import nherald.indigo.uow.Transaction;
 import nherald.indigo.uow.TransactionRunnable;
 
 /**
@@ -18,5 +19,5 @@ public interface Store
 
     boolean exists(String namespace, String id);
 
-    void transaction(TransactionRunnable runnable);
+    void transaction(TransactionRunnable<Transaction> runnable);
 }

@@ -4,16 +4,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nherald.indigo.store.StoreException;
-import nherald.indigo.store.firebase.db.FirebaseBatch;
-import nherald.indigo.store.firebase.db.FirebaseDatabase;
+import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
 import nherald.indigo.uow.Transaction;
 
@@ -40,13 +37,13 @@ public class FirebaseTransaction implements Transaction
 
     private static final int BATCH_SIZE = 500;
 
-    private final FirebaseDatabase database;
+    private final FirebaseRawTransaction transaction;
 
     private final Map<String, Update> pending = new HashMap<>(203);
 
-    public FirebaseTransaction(FirebaseDatabase database)
+    public FirebaseTransaction(FirebaseRawTransaction transaction)
     {
-        this.database = database;
+        this.transaction = transaction;
     }
 
     public <T> void put(String namespace, String entityId, T entity)
@@ -55,7 +52,7 @@ public class FirebaseTransaction implements Transaction
 
         final String mapKey = getMapKey(namespace, entityId);
 
-        pending.put(mapKey, batch -> batch.set(docId, entity));
+        pending.put(mapKey, () -> transaction.set(docId, entity));
     }
 
     public void delete(String namespace, String entityId)
@@ -64,13 +61,15 @@ public class FirebaseTransaction implements Transaction
 
         final String mapKey = getMapKey(namespace, entityId);
 
-        pending.put(mapKey, batch -> batch.delete(docId));
+        pending.put(mapKey, () -> transaction.delete(docId));
     }
 
-    void commit()
+    void flush()
     {
         final AtomicInteger count = new AtomicInteger();
 
+        // TODO We aren't creating transactions ourselves anymore, so can't create a new transaction
+        //      for each batch of 500. Need to implement a solution to handle this
         pending.entrySet()
             .stream()
             // Split the map into chunks, of no more than BATCH_SIZE updates in each
@@ -90,32 +89,22 @@ public class FirebaseTransaction implements Transaction
 
     private void commitChunk(List<Entry<String, Update>> chunk)
     {
-        final FirebaseBatch batch = database.batch();
-
         chunk.stream()
-            .forEach(e -> apply(e.getKey(), e.getValue(), batch));
+            .forEach(e -> apply(e.getKey(), e.getValue()));
 
         logger.info("Committing batch of size {}", chunk.size());
-        try
-        {
-            batch.commit();
-        }
-        catch (InterruptedException | ExecutionException ex)
-        {
-            throw new StoreException("Error committing batch", ex);
-        }
     }
 
-    private void apply(String key, Update update, FirebaseBatch batch)
+    private void apply(String key, Update update)
     {
         logger.info("Adding update to batch: {}", key);
 
-        update.apply(batch);
+        update.apply();
     }
 
     @FunctionalInterface
     private static interface Update
     {
-        void apply(FirebaseBatch batch);
+        void apply();
     }
 }

@@ -9,7 +9,8 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 
-import nherald.indigo.store.firebase.db.FirebaseBatch;
+import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
+import nherald.indigo.uow.TransactionRunnable;
 import nherald.indigo.store.firebase.db.FirebaseDatabase;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
@@ -47,9 +48,14 @@ public class FirestoreWrapper implements FirebaseDatabase
     }
 
     @Override
-    public FirebaseBatch batch()
+    public void transaction(TransactionRunnable<FirebaseRawTransaction> runnable)
+        throws InterruptedException, ExecutionException
     {
-        return new WriteBatchWrapper(database.batch(), this);
+        database.runTransaction(firebaseTransaction -> {
+            final FirebaseRawTransaction transaction = new TransactionWrapper(firebaseTransaction, this);
+            runnable.run(transaction);
+            return null;
+        }).get();
     }
 
     private DocumentReference[] asRefs(List<FirebaseDocumentId> ids)

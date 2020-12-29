@@ -3,6 +3,8 @@ package nherald.indigo.store.firebase.db;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import nherald.indigo.uow.TransactionRunnable;
+
 public interface FirebaseDatabase
 {
     FirebaseDocument get(FirebaseDocumentId id)
@@ -11,5 +13,6 @@ public interface FirebaseDatabase
     List<FirebaseDocument> getAll(List<FirebaseDocumentId> ids)
         throws InterruptedException, ExecutionException;
 
-    FirebaseBatch batch();
+    void transaction(TransactionRunnable<FirebaseRawTransaction> runnable)
+        throws InterruptedException, ExecutionException;
 }

@@ -1,7 +1,7 @@
 package nherald.indigo.uow;
 
 @FunctionalInterface
-public interface TransactionRunnable
+public interface TransactionRunnable<T>
 {
-    void run(Transaction t);
+    void run(T t);
 }
