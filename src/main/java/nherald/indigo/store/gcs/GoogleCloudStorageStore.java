@@ -71,21 +71,6 @@ public class GoogleCloudStorageStore implements Store
     }
 
     @Override
-    public <T> void put(String namespace, String id, T item, Transaction transaction)
-    {
-        IdValidator.check(id);
-
-        // TODO
-    }
-
-    public void delete(String namespace, String id, Transaction transaction)
-    {
-        IdValidator.check(id);
-
-        // TODO
-    }
-
-    @Override
     public Transaction transaction()
     {
         // TODO

@@ -25,14 +25,14 @@ public class FileTransaction implements Transaction
     public <T> void put(String namespace, String entityId, T entity)
     {
         pending.put(getMapKey(namespace, entityId), () -> {
-            store.put(namespace, entityId, entity, this);
+            store.put(namespace, entityId, entity);
         });
     }
 
     public void delete(String namespace, String entityId)
     {
         pending.put(getMapKey(namespace, entityId), () -> {
-            store.delete(namespace, entityId, this);
+            store.delete(namespace, entityId);
         });
     }
 

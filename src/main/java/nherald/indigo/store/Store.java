@@ -18,9 +18,5 @@ public interface Store
 
     boolean exists(String namespace, String id);
 
-    <T> void put(String namespace, String id, T entity, Transaction transaction);
-
-    void delete(String namespace, String id, Transaction transaction);
-
     Transaction transaction();
 }

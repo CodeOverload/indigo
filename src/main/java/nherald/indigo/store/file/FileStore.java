@@ -49,8 +49,7 @@ public class FileStore implements Store
         return getFile(namespace, id).exists();
     }
 
-    @Override
-    public <T> void put(String namespace, String id, final T entity, Transaction transaction)
+    <T> void put(String namespace, String id, final T entity)
     {
         IdValidator.check(id);
 
@@ -65,19 +64,16 @@ public class FileStore implements Store
         }
     }
 
-    @Override
-    public void delete(String namespace, String id, Transaction transaction)
+    void delete(String namespace, String id)
     {
         IdValidator.check(id);
 
-        ((FileTransaction) transaction).add(namespace, id, () -> {
-            final File file = getFile(namespace, id);
+        final File file = getFile(namespace, id);
 
-            if (!file.delete())
-            {
-                throw new StoreException("Unable to delete file " + file.getAbsolutePath());
-            }
-        });
+        if (!file.delete())
+        {
+            throw new StoreException("Unable to delete file " + file.getAbsolutePath());
+        }
     }
 
     @Override
