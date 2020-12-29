@@ -20,17 +20,19 @@ import nherald.indigo.uow.Transaction;
 /**
  * Single-use transaction
  *
- * Notes for methods that apply updates (e.g. FirebaseTransaction#put)
+ * <p>Update operations (put/delete) will be batched up and run at the end.
+ * This is a Firestore restriction; all updates must appear after any get/read
+ * operations
  *
- * - If an update to is applied to an entity more than once, only the last will be
- *   applied to the database. There's no point in applying earlier updates when the
- *   later one will overwrite it. Additionally, Firestore doesn't allow multiple
- *   writes within the same second on the same object
+ * <p>If an update to is applied to an entity more than once, only the last will be
+ * applied to the database. There's no point in applying earlier updates when the
+ * later one will overwrite it. Additionally, Firestore doesn't allow multiple
+ * writes within the same second on the same object
  *
- * - Updates may be run in any order, regardless of the order they were added.
- *   All entities are stored independently on the filesystem with no hard
- *   dependencies between each other, so it shouldn't matter which order they're
- *   saved in
+ * <p>Updates may be run in any order, regardless of the order they were added.
+ * All entities are stored independently on the filesystem with no hard
+ * dependencies between each other, so it shouldn't matter which order they're
+ * saved in
  */
 public class FirebaseTransaction implements Transaction
 {

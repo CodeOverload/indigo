@@ -103,7 +103,7 @@ public class Entities<T extends Entity>
                     delete(id, transaction);
                 }
 
-                store.put(NAMESPACE, asString(id), e, transaction);
+                transaction.put(NAMESPACE, asString(id), e);
 
                 addToIndices(e, transaction);
             });
@@ -123,7 +123,7 @@ public class Entities<T extends Entity>
             throw new StoreException(String.format("Entity %s doesn't exist", id));
         }
 
-        store.delete(NAMESPACE, asString(id), transaction);
+        transaction.delete(NAMESPACE, asString(id));
 
         indices.stream()
             .forEach(index -> index.remove(id, transaction));
@@ -133,7 +133,7 @@ public class Entities<T extends Entity>
     {
         final long id = info.generateId();
 
-        store.put(NAMESPACE, INFO_ID, info, transaction);
+        transaction.put(NAMESPACE, INFO_ID, info);
 
         return id;
     }

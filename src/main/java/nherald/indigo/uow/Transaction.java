@@ -14,8 +14,25 @@ package nherald.indigo.uow;
 public interface Transaction
 {
     /**
+     * Stores the supplied entity. If an entity already exists with the
+     * specified id, it will be overwritten. Otherwise a new entry will
+     * be created with the specified id
+     * @param namespace namespace
+     * @param entityId entity id
+     * @param entity entity
+     */
+    <T> void put(String namespace, String entityId, T entity);
+
+    /**
+     * Deletes the entity with the specified id from storage
+     * @param namespace namespace
+     * @param entityId entity id
+     */
+    void delete(String namespace, String entityId);
+
+    /**
      * Commit the pending updates. Note that this object isn't intended to be reused,
      * so the pending changes aren't cleared after calling this
      */
-    public void commit();
+    void commit();
 }

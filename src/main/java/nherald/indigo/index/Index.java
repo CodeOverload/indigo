@@ -81,7 +81,7 @@ public class Index<T extends Entity>
 
         final String segmentId = getSegmentId(prefix);
 
-        store.put(NAMESPACE, getStoreId(segmentId), segment, transaction);
+        transaction.put(NAMESPACE, getStoreId(segmentId), segment);
 
         // Update the contents
         final Contents contents = getContents();
@@ -100,7 +100,7 @@ public class Index<T extends Entity>
                 final IndexSegment segment = getSegmentById(segmentId);
                 segment.remove(entityId);
 
-                store.put(NAMESPACE, getStoreId(segmentId), segment, transaction);
+                transaction.put(NAMESPACE, getStoreId(segmentId), segment);
             });
 
         contents.remove(entityId);
@@ -182,7 +182,7 @@ public class Index<T extends Entity>
 
     private void saveContents(Contents contents, Transaction transaction)
     {
-        store.put(NAMESPACE, getContentsId(), contents, transaction);
+        transaction.put(NAMESPACE, getContentsId(), contents);
     }
 
     private String getContentsId()

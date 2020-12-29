@@ -13,7 +13,28 @@ public class FileTransaction implements Transaction
 {
     private static final Logger logger = LoggerFactory.getLogger(FileTransaction.class);
 
+    private final FileStore store;
+
     private final Map<String, Update> pending = new HashMap<>(101);
+
+    public FileTransaction(FileStore store)
+    {
+        this.store = store;
+    }
+
+    public <T> void put(String namespace, String entityId, T entity)
+    {
+        pending.put(getMapKey(namespace, entityId), () -> {
+            store.put(namespace, entityId, entity, this);
+        });
+    }
+
+    public void delete(String namespace, String entityId)
+    {
+        pending.put(getMapKey(namespace, entityId), () -> {
+            store.delete(namespace, entityId, this);
+        });
+    }
 
     /**
      * Adds an update to the transaction, to update in one go when finished. Notes:

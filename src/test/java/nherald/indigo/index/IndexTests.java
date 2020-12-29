@@ -21,7 +21,7 @@ import nherald.indigo.store.StoreException;
 import nherald.indigo.uow.Transaction;
 
 @ExtendWith(MockitoExtension.class)
-public class IndexTests
+class IndexTests
 {
     private static final String NAMESPACE = "indices";
 
@@ -121,7 +121,7 @@ public class IndexTests
 
         final IndexSegment expectedSegment = createSegment("pantha", List.of(46l));
 
-        verify(store).put(NAMESPACE, "name-pa", expectedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
     }
 
     @Test
@@ -136,7 +136,7 @@ public class IndexTests
 
         final IndexSegment expectedSegment = createSegment("pantha", List.of(2l, 7l, 46l));
 
-        verify(store).put(NAMESPACE, "name-pa", expectedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
     }
 
     @Test
@@ -151,7 +151,7 @@ public class IndexTests
 
         final IndexSegment expectedSegment = createSegment("pantha", List.of(2l, 7l));
 
-        verify(store).put(NAMESPACE, "name-pa", expectedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
     }
 
     @Test
@@ -164,15 +164,15 @@ public class IndexTests
         subject.add(List.of("pantha"), 8l, transaction);
 
         IndexSegment expectedSegment = createSegment("pantha", List.of(2l, 7l, 8l));
-        verify(store).put(NAMESPACE, "name-pa", expectedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
 
-        reset(store);
+        reset(transaction);
 
         // Then add 10
         subject.add(List.of("pantha"), 10l, transaction);
 
         expectedSegment = createSegment("pantha", List.of(2l, 7l, 8l, 10l));
-        verify(store).put(NAMESPACE, "name-pa", expectedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
     }
 
     @Test
@@ -182,7 +182,7 @@ public class IndexTests
         subject.add(List.of("pantha"), 8l, transaction);
 
         IndexSegment expectedSegment = createSegment("pantha", List.of(8l));
-        verify(store).put(NAMESPACE, "name-pa", expectedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
 
         reset(store);
 
@@ -190,7 +190,7 @@ public class IndexTests
         subject.add(List.of("tiger"), 3l, transaction);
 
         expectedSegment = createSegment("tiger", List.of(3l));
-        verify(store).put(NAMESPACE, "name-ti", expectedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-ti", expectedSegment);
     }
 
     @Test
@@ -200,9 +200,9 @@ public class IndexTests
         subject.add(List.of("pantha"), 8l, transaction);
 
         IndexSegment expectedSegment = createSegment("pantha", List.of(8l));
-        verify(store).put(NAMESPACE, "name-pa", expectedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
 
-        reset(store);
+        reset(transaction);
 
         // Then add 3 to pancetta
         subject.add(List.of("pancetta"), 3l, transaction);
@@ -210,7 +210,7 @@ public class IndexTests
         expectedSegment = createSegment("pantha", List.of(8l));
         expectedSegment.add("pancetta", 3l);
 
-        verify(store).put(NAMESPACE, "name-pa", expectedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
     }
 
     @Test
@@ -225,10 +225,10 @@ public class IndexTests
 
         // Both words should be added to the relevant segment
         IndexSegment expectedSegment = createSegment("pancetta", List.of(8l));
-        verify(store).put(NAMESPACE, "name-pa", expectedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
 
         expectedSegment = createSegment("ravioli", List.of(8l));
-        verify(store).put(NAMESPACE, "name-ra", expectedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-ra", expectedSegment);
     }
 
     @Test
@@ -241,7 +241,7 @@ public class IndexTests
         final Contents expectedContents = new Contents();
         expectedContents.add(8, "pa");
 
-        verify(store).put(NAMESPACE, "name-contents", expectedContents, transaction);
+        verify(transaction).put(NAMESPACE, "name-contents", expectedContents);
     }
 
     @Test
@@ -264,7 +264,7 @@ public class IndexTests
         expectedContents.add(4, "pa");
         expectedContents.add(8, "pa");
 
-        verify(store).put(NAMESPACE, "name-contents", expectedContents, transaction);
+        verify(transaction).put(NAMESPACE, "name-contents", expectedContents);
     }
 
     @Test
@@ -296,21 +296,21 @@ public class IndexTests
         storedContents.add(4, "pa");
         storedContents.add(6, "pa");
         storedContents.add(4, "ba");
-        verify(store).put(NAMESPACE, "name-contents", storedContents, transaction);
+        verify(transaction).put(NAMESPACE, "name-contents", storedContents);
 
         // And should be removed from only the segments it was in (we want removals/updates
         // to be efficient, and there could be hundreds of segments)
         storedSegment = createSegment("pantha", List.of(4l, 6l));
         storedSegment.add("pans", 6);
-        verify(store).put(NAMESPACE, "name-pa", storedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-pa", storedSegment);
 
         // 5 was the only entry in this segment
         storedSegment = createSegment("tarragon", List.of());
-        verify(store).put(NAMESPACE, "name-ta", storedSegment, transaction);
+        verify(transaction).put(NAMESPACE, "name-ta", storedSegment);
 
         // Should be unchanged as 5 wasn't in segment 'ba' originally
         verify(store, never()).get(NAMESPACE, "name-ba", IndexSegment.class); // Shouldn't make an attempt to load it
-        verify(store, never()).put(eq(NAMESPACE), eq("name-ba"), any(), eq(transaction));
+        verify(transaction, never()).put(eq(NAMESPACE), eq("name-ba"), any());
     }
 
     private static IndexSegment createSegment(String word, Collection<Long> ids)

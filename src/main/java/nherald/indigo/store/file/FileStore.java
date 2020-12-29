@@ -54,20 +54,18 @@ public class FileStore implements Store
     {
         IdValidator.check(id);
 
-        // The cast here is ok; the batch is supplied by startBatch of this instance so will always be compatible
-        ((FileTransaction) transaction).add(namespace, id, () -> {
-            final File file = getFile(namespace, id);
-            try
-            {
-                mapper.writeValue(file, entity);
-            }
-            catch (IOException e)
-            {
-                throw new StoreException("Error writing to " + file.getAbsolutePath(), e);
-            }
-        });
+        final File file = getFile(namespace, id);
+        try
+        {
+            mapper.writeValue(file, entity);
+        }
+        catch (IOException e)
+        {
+            throw new StoreException("Error writing to " + file.getAbsolutePath(), e);
+        }
     }
 
+    @Override
     public void delete(String namespace, String id, Transaction transaction)
     {
         IdValidator.check(id);
@@ -85,7 +83,7 @@ public class FileStore implements Store
     @Override
     public Transaction transaction()
     {
-        return new FileTransaction();
+        return new FileTransaction(this);
     }
 
     private File getFile(String namespace, String id)

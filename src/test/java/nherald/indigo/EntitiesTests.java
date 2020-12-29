@@ -21,7 +21,7 @@ import nherald.indigo.uow.Transaction;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class EntitiesTests
+class EntitiesTests
 {
     private static final String WORD1 = "something";
 
@@ -180,7 +180,7 @@ public class EntitiesTests
         final TestEntity entity = new TestEntity();
         subject.put(entity);
 
-        verify(store).put(NAMESPACE, CURRENT_MAX_ID + 1 + "", entity, transaction);
+        verify(transaction).put(NAMESPACE, CURRENT_MAX_ID + 1 + "", entity);
     }
 
     @Test
@@ -194,8 +194,8 @@ public class EntitiesTests
         final TestEntity entity2 = new TestEntity();
         subject.put(entity2);
 
-        verify(store).put(NAMESPACE, CURRENT_MAX_ID + 1 + "", entity1, transaction);
-        verify(store).put(NAMESPACE, CURRENT_MAX_ID + 2 + "", entity2, transaction);
+        verify(transaction).put(NAMESPACE, CURRENT_MAX_ID + 1 + "", entity1);
+        verify(transaction).put(NAMESPACE, CURRENT_MAX_ID + 2 + "", entity2);
     }
 
     @Test
@@ -211,7 +211,7 @@ public class EntitiesTests
         entity.setId(id);
         subject.put(entity);
 
-        verify(store).put(NAMESPACE, id + "", entity, transaction);
+        verify(transaction).put(NAMESPACE, id + "", entity);
     }
 
     @Test
@@ -264,7 +264,7 @@ public class EntitiesTests
 
         subject.put(entity);
 
-        verify(store, never()).delete(anyString(), anyString(), any());
+        verify(transaction, never()).delete(anyString(), anyString());
     }
 
     @Test
@@ -282,7 +282,7 @@ public class EntitiesTests
 
         subject.put(entity);
 
-        verify(store).delete(NAMESPACE, id + "", transaction);
+        verify(transaction).delete(NAMESPACE, id + "");
     }
 
     @Test
@@ -321,12 +321,12 @@ public class EntitiesTests
 
         subject.put(entity);
 
-        final InOrder order = inOrder(store);
+        final InOrder order = inOrder(transaction);
 
         // Earlier tests just check delete & put are called independently. Check
         // they're done in the correct order here
-        order.verify(store).delete(NAMESPACE, id + "", transaction);
-        order.verify(store).put(NAMESPACE, id + "", entity, transaction);
+        order.verify(transaction).delete(NAMESPACE, id + "");
+        order.verify(transaction).put(NAMESPACE, id + "", entity);
     }
 
     @Test
@@ -424,7 +424,7 @@ public class EntitiesTests
 
         subject.delete(id);
 
-        verify(store).delete(NAMESPACE, id + "", transaction);
+        verify(transaction).delete(NAMESPACE, id + "");
     }
 
     @Test
