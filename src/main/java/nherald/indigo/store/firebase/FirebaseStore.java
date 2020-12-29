@@ -73,13 +73,13 @@ public class FirebaseStore implements Store
     @Override
     public <T> void put(String namespace, String id, T entity, Transaction transaction)
     {
-        ((FirebaseTransaction) transaction).put(namespace, id, entity);
+        throw new IllegalStateException("Not implemented");
     }
 
     @Override
     public void delete(String namespace, String id, Transaction transaction)
     {
-        ((FirebaseTransaction) transaction).delete(namespace, id);
+        throw new IllegalStateException("Not implemented");
     }
 
     @Override
