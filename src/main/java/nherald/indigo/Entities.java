@@ -78,9 +78,7 @@ public class Entities<T extends Entity>
 
     public void put(Collection<T> entities)
     {
-        final Transaction transaction = store.transaction();
-        put(entities, transaction);
-        transaction.commit();
+        store.transaction(transaction -> put(entities, transaction));
     }
 
     private void put(Collection<T> entities, Transaction transaction)
@@ -111,9 +109,7 @@ public class Entities<T extends Entity>
 
     public void delete(long id)
     {
-        final Transaction transaction = store.transaction();
-        delete(id, transaction);
-        transaction.commit();
+        store.transaction(transaction -> delete(id, transaction));
     }
 
     private void delete(long id, Transaction transaction)

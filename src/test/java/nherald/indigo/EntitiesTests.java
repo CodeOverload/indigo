@@ -18,6 +18,7 @@ import nherald.indigo.index.Index;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.uow.Transaction;
+import nherald.indigo.uow.TransactionRunnable;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -108,7 +109,7 @@ class EntitiesTests
     @Test
     void put_generatesNewId_forNewEntity()
     {
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         final TestEntity entity = new TestEntity();
 
@@ -120,7 +121,7 @@ class EntitiesTests
     @Test
     void put_generatesNewId_forNewEntities()
     {
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         // Add two entities, the second should get it's own id
         subject.put(new TestEntity());
@@ -138,7 +139,7 @@ class EntitiesTests
         // stored to denote which is the next id)
         store = mock(Store.class);
 
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         final List<Index<TestEntity>> indices
             = List.of(index1, index2, index3);
@@ -158,7 +159,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -175,7 +176,7 @@ class EntitiesTests
     @Test
     void put_addsToStore_forNewEntity()
     {
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         final TestEntity entity = new TestEntity();
         subject.put(entity);
@@ -186,7 +187,7 @@ class EntitiesTests
     @Test
     void put_addsToStore_forNewEntities()
     {
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         final TestEntity entity1 = new TestEntity();
         subject.put(entity1);
@@ -201,7 +202,7 @@ class EntitiesTests
     @Test
     void put_addsToStore_forExistingEntity()
     {
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         final long id = 65;
 
@@ -217,7 +218,7 @@ class EntitiesTests
     @Test
     void put_addsToAllIndices_forNewEntity()
     {
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         final TestEntity entity = new TestEntity();
         subject.put(entity);
@@ -236,7 +237,7 @@ class EntitiesTests
     @Test
     void put_addsToAllIndices_forExistingEntity()
     {
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         final long id = 65;
 
@@ -258,7 +259,7 @@ class EntitiesTests
     @Test
     void put_doesntTryToDeleteOld_forNewEntity()
     {
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         final TestEntity entity = new TestEntity();
 
@@ -272,7 +273,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -290,7 +291,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -311,7 +312,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -334,7 +335,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -358,7 +359,7 @@ class EntitiesTests
     @Test
     void put_commitsAllChangesInOneBatch()
     {
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         when(store.exists(anyString(), anyString())).thenReturn(true);
 
@@ -372,11 +373,8 @@ class EntitiesTests
 
         subject.put(List.of(entity1, entity2));
 
-        final InOrder order = inOrder(store, index1, index2, index3, transaction);
-
-        // Check no more interactions after the commit
-        order.verify(transaction).commit();
-        order.verifyNoMoreInteractions();
+        // Only one transaction requested
+        verify(store).transaction(any());
     }
 
     @Test
@@ -384,7 +382,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         // No entity of this id is in the store
         when(store.exists(NAMESPACE, id + "")).thenReturn(false);
@@ -403,7 +401,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         // No entity of this id is in the store
         when(store.exists(NAMESPACE, id + "")).thenReturn(false);
@@ -418,7 +416,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -432,7 +430,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -446,7 +444,7 @@ class EntitiesTests
     @Test
     void delete_commitsAllChangesInOneBatch()
     {
-        when(store.transaction()).thenReturn(transaction);
+        mockTransaction();
 
         when(store.exists(anyString(), anyString())).thenReturn(true);
 
@@ -454,10 +452,16 @@ class EntitiesTests
         // are committed as part of the same batch
         subject.delete(35l);
 
-        final InOrder order = inOrder(store, index1, index2, index3, transaction);
+        // Only one transaction requested
+        verify(store).transaction(any());
+    }
 
-        // Check no more interactions after the commit
-        order.verify(transaction).commit();
-        order.verifyNoMoreInteractions();
+    private void mockTransaction()
+    {
+        doAnswer(invocation -> {
+            final TransactionRunnable runnable = (TransactionRunnable) invocation.getArguments()[0];
+            runnable.run(transaction);
+            return null;
+        }).when(store).transaction(any());
     }
 }

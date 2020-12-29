@@ -11,7 +11,7 @@ import nherald.indigo.store.StoreException;
 import nherald.indigo.store.firebase.db.FirebaseDatabase;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
-import nherald.indigo.uow.Transaction;
+import nherald.indigo.uow.TransactionRunnable;
 
 public class FirebaseStore implements Store
 {
@@ -71,8 +71,12 @@ public class FirebaseStore implements Store
     }
 
     @Override
-    public Transaction transaction()
+    public void transaction(TransactionRunnable runnable)
     {
-        return new FirebaseTransaction(database);
+        final FirebaseTransaction transaction = new FirebaseTransaction(database);
+
+        runnable.run(transaction);
+
+        transaction.commit();
     }
 }

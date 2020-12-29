@@ -52,12 +52,11 @@ public class FileTransaction implements Transaction
         pending.put(getMapKey(namespace, entityId), update);
     }
 
-    @Override
-    public void commit()
+    void commit()
     {
         pending.entrySet()
             .stream()
-            .forEach(this::commit);
+            .forEach(this::commitChange);
     }
 
     private String getMapKey(String namespace, String entityId)
@@ -69,7 +68,7 @@ public class FileTransaction implements Transaction
             .toString();
     }
 
-    private void commit(Entry<String, Update> update)
+    private void commitChange(Entry<String, Update> update)
     {
         logger.info("Commit: {}", update.getKey());
 

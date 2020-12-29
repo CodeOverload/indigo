@@ -3,7 +3,7 @@ package nherald.indigo.store;
 import java.util.Collection;
 import java.util.List;
 
-import nherald.indigo.uow.Transaction;
+import nherald.indigo.uow.TransactionRunnable;
 
 /**
  * Stores entities (documents/objects/etc) to persistent storage.
@@ -18,5 +18,5 @@ public interface Store
 
     boolean exists(String namespace, String id);
 
-    Transaction transaction();
+    void transaction(TransactionRunnable runnable);
 }

@@ -67,8 +67,7 @@ public class FirebaseTransaction implements Transaction
         pending.put(mapKey, batch -> batch.delete(docId));
     }
 
-    @Override
-    public void commit()
+    void commit()
     {
         final AtomicInteger count = new AtomicInteger();
 

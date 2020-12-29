@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import nherald.indigo.store.IdValidator;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
-import nherald.indigo.uow.Transaction;
+import nherald.indigo.uow.TransactionRunnable;
 
 public class FileStore implements Store
 {
@@ -77,9 +77,13 @@ public class FileStore implements Store
     }
 
     @Override
-    public Transaction transaction()
+    public void transaction(TransactionRunnable runnable)
     {
-        return new FileTransaction(this);
+        final FileTransaction transaction = new FileTransaction(this);
+
+        runnable.run(transaction);
+
+        transaction.commit();
     }
 
     private File getFile(String namespace, String id)

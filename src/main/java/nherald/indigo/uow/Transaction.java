@@ -29,10 +29,4 @@ public interface Transaction
      * @param entityId entity id
      */
     void delete(String namespace, String entityId);
-
-    /**
-     * Commit the pending updates. Note that this object isn't intended to be reused,
-     * so the pending changes aren't cleared after calling this
-     */
-    void commit();
 }
