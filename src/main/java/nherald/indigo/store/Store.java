@@ -3,7 +3,7 @@ package nherald.indigo.store;
 import java.util.Collection;
 import java.util.List;
 
-import nherald.indigo.uow.BatchUpdate;
+import nherald.indigo.uow.Transaction;
 
 /**
  * Stores entities (documents/objects/etc) to persistent storage.
@@ -18,9 +18,9 @@ public interface Store
 
     boolean exists(String namespace, String id);
 
-    <T> void put(String namespace, String id, T entity, BatchUpdate batch);
+    <T> void put(String namespace, String id, T entity, Transaction transaction);
 
-    void delete(String namespace, String id, BatchUpdate batch);
+    void delete(String namespace, String id, Transaction transaction);
 
-    BatchUpdate startBatch();
+    Transaction transaction();
 }

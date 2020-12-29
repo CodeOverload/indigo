@@ -7,16 +7,16 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nherald.indigo.uow.BatchUpdate;
+import nherald.indigo.uow.Transaction;
 
-public class FileBatchUpdate implements BatchUpdate
+public class FileTransaction implements Transaction
 {
-    private static final Logger logger = LoggerFactory.getLogger(FileBatchUpdate.class);
+    private static final Logger logger = LoggerFactory.getLogger(FileTransaction.class);
 
     private final Map<String, Update> pending = new HashMap<>(101);
 
     /**
-     * Adds an update to the batch, to update in one go when finished. Notes:
+     * Adds an update to the transaction, to update in one go when finished. Notes:
      *
      * - If an entity is added more than once, only the last version added
      *   will be saved

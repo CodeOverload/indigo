@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import nherald.indigo.store.IdValidator;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
-import nherald.indigo.uow.BatchUpdate;
+import nherald.indigo.uow.Transaction;
 
 public class FileStore implements Store
 {
@@ -50,12 +50,12 @@ public class FileStore implements Store
     }
 
     @Override
-    public <T> void put(String namespace, String id, final T entity, BatchUpdate batch)
+    public <T> void put(String namespace, String id, final T entity, Transaction transaction)
     {
         IdValidator.check(id);
 
         // The cast here is ok; the batch is supplied by startBatch of this instance so will always be compatible
-        ((FileBatchUpdate) batch).add(namespace, id, () -> {
+        ((FileTransaction) transaction).add(namespace, id, () -> {
             final File file = getFile(namespace, id);
             try
             {
@@ -68,11 +68,11 @@ public class FileStore implements Store
         });
     }
 
-    public void delete(String namespace, String id, BatchUpdate batch)
+    public void delete(String namespace, String id, Transaction transaction)
     {
         IdValidator.check(id);
 
-        ((FileBatchUpdate) batch).add(namespace, id, () -> {
+        ((FileTransaction) transaction).add(namespace, id, () -> {
             final File file = getFile(namespace, id);
 
             if (!file.delete())
@@ -83,9 +83,9 @@ public class FileStore implements Store
     }
 
     @Override
-    public BatchUpdate startBatch()
+    public Transaction transaction()
     {
-        return new FileBatchUpdate();
+        return new FileTransaction();
     }
 
     private File getFile(String namespace, String id)

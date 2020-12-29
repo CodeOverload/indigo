@@ -10,7 +10,7 @@ import nherald.indigo.index.Index;
 import nherald.indigo.index.terms.BasicTokeniser;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
-import nherald.indigo.uow.BatchUpdate;
+import nherald.indigo.uow.Transaction;
 
 public class Entities<T extends Entity>
 {
@@ -78,12 +78,12 @@ public class Entities<T extends Entity>
 
     public void put(Collection<T> entities)
     {
-        final BatchUpdate batch = store.startBatch();
-        put(entities, batch);
-        batch.commit();
+        final Transaction transaction = store.transaction();
+        put(entities, transaction);
+        transaction.commit();
     }
 
-    private void put(Collection<T> entities, BatchUpdate batch)
+    private void put(Collection<T> entities, Transaction transaction)
     {
         entities.stream()
             .forEach(e -> {
@@ -91,7 +91,7 @@ public class Entities<T extends Entity>
                 // This is a new entity
                 if (e.getId() == null)
                 {
-                    id = generateId(batch);
+                    id = generateId(transaction);
                     e.setId(id);
                 }
                 // Existing entity
@@ -100,40 +100,40 @@ public class Entities<T extends Entity>
                     // The entity itself doesn't need deleted, but we need to remove
                     // it from all indices as we don't want them containing stale data
                     id = e.getId();
-                    delete(id, batch);
+                    delete(id, transaction);
                 }
 
-                store.put(NAMESPACE, asString(id), e, batch);
+                store.put(NAMESPACE, asString(id), e, transaction);
 
-                addToIndices(e, batch);
+                addToIndices(e, transaction);
             });
     }
 
     public void delete(long id)
     {
-        final BatchUpdate batch = store.startBatch();
-        delete(id, batch);
-        batch.commit();
+        final Transaction transaction = store.transaction();
+        delete(id, transaction);
+        transaction.commit();
     }
 
-    private void delete(long id, BatchUpdate batch)
+    private void delete(long id, Transaction transaction)
     {
         if (!store.exists(NAMESPACE, asString(id)))
         {
             throw new StoreException(String.format("Entity %s doesn't exist", id));
         }
 
-        store.delete(NAMESPACE, asString(id), batch);
+        store.delete(NAMESPACE, asString(id), transaction);
 
         indices.stream()
-            .forEach(index -> index.remove(id, batch));
+            .forEach(index -> index.remove(id, transaction));
     }
 
-    private long generateId(BatchUpdate batch)
+    private long generateId(Transaction transaction)
     {
         final long id = info.generateId();
 
-        store.put(NAMESPACE, INFO_ID, info, batch);
+        store.put(NAMESPACE, INFO_ID, info, transaction);
 
         return id;
     }
@@ -152,13 +152,13 @@ public class Entities<T extends Entity>
         return new EntitiesInfo();
     }
 
-    private void addToIndices(T entity, BatchUpdate batch)
+    private void addToIndices(T entity, Transaction transaction)
     {
         indices.stream()
-            .forEach(index -> addToIndex(entity, index, batch));
+            .forEach(index -> addToIndex(entity, index, transaction));
     }
 
-    private void addToIndex(T entity, Index<T> index, BatchUpdate batch)
+    private void addToIndex(T entity, Index<T> index, Transaction transaction)
     {
         final BasicTokeniser tokeniser = new BasicTokeniser();
 
@@ -166,6 +166,6 @@ public class Entities<T extends Entity>
 
         final List<String> words = tokeniser.tokenise(text);
 
-        index.add(words, entity.getId(), batch);
+        index.add(words, entity.getId(), transaction);
     }
 }

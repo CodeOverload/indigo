@@ -11,7 +11,7 @@ import nherald.indigo.store.StoreException;
 import nherald.indigo.store.firebase.db.FirebaseDatabase;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
-import nherald.indigo.uow.BatchUpdate;
+import nherald.indigo.uow.Transaction;
 
 public class FirebaseStore implements Store
 {
@@ -71,20 +71,20 @@ public class FirebaseStore implements Store
     }
 
     @Override
-    public <T> void put(String namespace, String id, T entity, BatchUpdate batch)
+    public <T> void put(String namespace, String id, T entity, Transaction transaction)
     {
-        ((FirebaseBatchUpdate) batch).put(namespace, id, entity);
+        ((FirebaseTransaction) transaction).put(namespace, id, entity);
     }
 
     @Override
-    public void delete(String namespace, String id, BatchUpdate batch)
+    public void delete(String namespace, String id, Transaction transaction)
     {
-        ((FirebaseBatchUpdate) batch).delete(namespace, id);
+        ((FirebaseTransaction) transaction).delete(namespace, id);
     }
 
     @Override
-    public BatchUpdate startBatch()
+    public Transaction transaction()
     {
-        return new FirebaseBatchUpdate(database);
+        return new FirebaseTransaction(database);
     }
 }

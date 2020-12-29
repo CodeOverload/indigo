@@ -9,7 +9,7 @@ import nherald.indigo.Entity;
 import nherald.indigo.index.terms.WordFilter;
 import nherald.indigo.store.IdValidator;
 import nherald.indigo.store.Store;
-import nherald.indigo.uow.BatchUpdate;
+import nherald.indigo.uow.Transaction;
 
 /**
  * Represents an index, which stores key value pairs. Typically words/prefixes/values, which map
@@ -22,7 +22,7 @@ import nherald.indigo.uow.BatchUpdate;
  * As segments are often updated many times during a single update (e.g. the word 'tomato'
  * produces the ngrams [tom, toma, tomat, tomato], which all have the same prefix), this caches
  * the segments in memory and updates the in-memory copy each time. Updates can be flushed
- * to storage by committing the batch
+ * to storage by committing the transaction
  *
  * As a result of caching, these objects should be as short-lived as possible, otherwise the cache
  * will eventually go out of sync with the storage. Don't use this across different requests
@@ -66,14 +66,14 @@ public class Index<T extends Entity>
         return segment.get(word);
     }
 
-    public void add(Collection<String> words, long entityId, BatchUpdate batch)
+    public void add(Collection<String> words, long entityId, Transaction transaction)
     {
         words.stream()
             .flatMap(wordFilter::process)
-            .forEach(prefix -> add(prefix, entityId, batch));
+            .forEach(prefix -> add(prefix, entityId, transaction));
     }
 
-    private void add(String prefix, long entityId, BatchUpdate batch)
+    private void add(String prefix, long entityId, Transaction transaction)
     {
         final IndexSegment segment = getSegmentForWord(prefix);
 
@@ -81,15 +81,15 @@ public class Index<T extends Entity>
 
         final String segmentId = getSegmentId(prefix);
 
-        store.put(NAMESPACE, getStoreId(segmentId), segment, batch);
+        store.put(NAMESPACE, getStoreId(segmentId), segment, transaction);
 
         // Update the contents
         final Contents contents = getContents();
         contents.add(entityId, segmentId);
-        saveContents(contents, batch);
+        saveContents(contents, transaction);
     }
 
-    public void remove(long entityId, BatchUpdate batch)
+    public void remove(long entityId, Transaction transaction)
     {
         final Contents contents = getContents();
 
@@ -100,11 +100,11 @@ public class Index<T extends Entity>
                 final IndexSegment segment = getSegmentById(segmentId);
                 segment.remove(entityId);
 
-                store.put(NAMESPACE, getStoreId(segmentId), segment, batch);
+                store.put(NAMESPACE, getStoreId(segmentId), segment, transaction);
             });
 
         contents.remove(entityId);
-        saveContents(contents, batch);
+        saveContents(contents, transaction);
     }
 
     private String getSegmentId(String word)
@@ -180,9 +180,9 @@ public class Index<T extends Entity>
         return new Contents();
     }
 
-    private void saveContents(Contents contents, BatchUpdate batch)
+    private void saveContents(Contents contents, Transaction transaction)
     {
-        store.put(NAMESPACE, getContentsId(), contents, batch);
+        store.put(NAMESPACE, getContentsId(), contents, transaction);
     }
 
     private String getContentsId()

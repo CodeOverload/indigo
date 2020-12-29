@@ -17,7 +17,7 @@ import static org.mockito.Mockito.*;
 import nherald.indigo.index.Index;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
-import nherald.indigo.uow.BatchUpdate;
+import nherald.indigo.uow.Transaction;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -42,7 +42,7 @@ public class EntitiesTests
     private Store store;
 
     @Mock
-    private BatchUpdate batch;
+    private Transaction transaction;
 
     private Entities<TestEntity> subject;
 
@@ -108,7 +108,7 @@ public class EntitiesTests
     @Test
     void put_generatesNewId_forNewEntity()
     {
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         final TestEntity entity = new TestEntity();
 
@@ -120,7 +120,7 @@ public class EntitiesTests
     @Test
     void put_generatesNewId_forNewEntities()
     {
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         // Add two entities, the second should get it's own id
         subject.put(new TestEntity());
@@ -138,7 +138,7 @@ public class EntitiesTests
         // stored to denote which is the next id)
         store = mock(Store.class);
 
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         final List<Index<TestEntity>> indices
             = List.of(index1, index2, index3);
@@ -158,7 +158,7 @@ public class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -175,18 +175,18 @@ public class EntitiesTests
     @Test
     void put_addsToStore_forNewEntity()
     {
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         final TestEntity entity = new TestEntity();
         subject.put(entity);
 
-        verify(store).put(NAMESPACE, CURRENT_MAX_ID + 1 + "", entity, batch);
+        verify(store).put(NAMESPACE, CURRENT_MAX_ID + 1 + "", entity, transaction);
     }
 
     @Test
     void put_addsToStore_forNewEntities()
     {
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         final TestEntity entity1 = new TestEntity();
         subject.put(entity1);
@@ -194,14 +194,14 @@ public class EntitiesTests
         final TestEntity entity2 = new TestEntity();
         subject.put(entity2);
 
-        verify(store).put(NAMESPACE, CURRENT_MAX_ID + 1 + "", entity1, batch);
-        verify(store).put(NAMESPACE, CURRENT_MAX_ID + 2 + "", entity2, batch);
+        verify(store).put(NAMESPACE, CURRENT_MAX_ID + 1 + "", entity1, transaction);
+        verify(store).put(NAMESPACE, CURRENT_MAX_ID + 2 + "", entity2, transaction);
     }
 
     @Test
     void put_addsToStore_forExistingEntity()
     {
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         final long id = 65;
 
@@ -211,13 +211,13 @@ public class EntitiesTests
         entity.setId(id);
         subject.put(entity);
 
-        verify(store).put(NAMESPACE, id + "", entity, batch);
+        verify(store).put(NAMESPACE, id + "", entity, transaction);
     }
 
     @Test
     void put_addsToAllIndices_forNewEntity()
     {
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         final TestEntity entity = new TestEntity();
         subject.put(entity);
@@ -228,15 +228,15 @@ public class EntitiesTests
         final List<String> words2 = List.of("wordC");
         final List<String> words3 = List.of("wordD");
 
-        verify(index1).add(words1, id, batch);
-        verify(index2).add(words2, id, batch);
-        verify(index3).add(words3, id, batch);
+        verify(index1).add(words1, id, transaction);
+        verify(index2).add(words2, id, transaction);
+        verify(index3).add(words3, id, transaction);
     }
 
     @Test
     void put_addsToAllIndices_forExistingEntity()
     {
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         final long id = 65;
 
@@ -250,15 +250,15 @@ public class EntitiesTests
         final List<String> words2 = List.of("wordC");
         final List<String> words3 = List.of("wordD");
 
-        verify(index1).add(words1, id, batch);
-        verify(index2).add(words2, id, batch);
-        verify(index3).add(words3, id, batch);
+        verify(index1).add(words1, id, transaction);
+        verify(index2).add(words2, id, transaction);
+        verify(index3).add(words3, id, transaction);
     }
 
     @Test
     void put_doesntTryToDeleteOld_forNewEntity()
     {
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         final TestEntity entity = new TestEntity();
 
@@ -272,7 +272,7 @@ public class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -282,7 +282,7 @@ public class EntitiesTests
 
         subject.put(entity);
 
-        verify(store).delete(NAMESPACE, id + "", batch);
+        verify(store).delete(NAMESPACE, id + "", transaction);
     }
 
     @Test
@@ -290,7 +290,7 @@ public class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -301,9 +301,9 @@ public class EntitiesTests
         subject.put(entity);
 
         // Old entries should be removed
-        verify(index1).remove(id, batch);
-        verify(index2).remove(id, batch);
-        verify(index3).remove(id, batch);
+        verify(index1).remove(id, transaction);
+        verify(index2).remove(id, transaction);
+        verify(index3).remove(id, transaction);
     }
 
     @Test
@@ -311,7 +311,7 @@ public class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -325,8 +325,8 @@ public class EntitiesTests
 
         // Earlier tests just check delete & put are called independently. Check
         // they're done in the correct order here
-        order.verify(store).delete(NAMESPACE, id + "", batch);
-        order.verify(store).put(NAMESPACE, id + "", entity, batch);
+        order.verify(store).delete(NAMESPACE, id + "", transaction);
+        order.verify(store).put(NAMESPACE, id + "", entity, transaction);
     }
 
     @Test
@@ -334,7 +334,7 @@ public class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -351,14 +351,14 @@ public class EntitiesTests
         // Earlier tests just check delete & put are called independently. Check
         // they're done in the correct order here. Note; just checking one of the
         // indices here - no need to check the others
-        order.verify(index1).remove(id, batch);
-        order.verify(index1).add(words1, id, batch);
+        order.verify(index1).remove(id, transaction);
+        order.verify(index1).add(words1, id, transaction);
     }
 
     @Test
     void put_commitsAllChangesInOneBatch()
     {
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         when(store.exists(anyString(), anyString())).thenReturn(true);
 
@@ -372,10 +372,10 @@ public class EntitiesTests
 
         subject.put(List.of(entity1, entity2));
 
-        final InOrder order = inOrder(store, index1, index2, index3, batch);
+        final InOrder order = inOrder(store, index1, index2, index3, transaction);
 
         // Check no more interactions after the commit
-        order.verify(batch).commit();
+        order.verify(transaction).commit();
         order.verifyNoMoreInteractions();
     }
 
@@ -384,7 +384,7 @@ public class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         // No entity of this id is in the store
         when(store.exists(NAMESPACE, id + "")).thenReturn(false);
@@ -403,7 +403,7 @@ public class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         // No entity of this id is in the store
         when(store.exists(NAMESPACE, id + "")).thenReturn(false);
@@ -418,13 +418,13 @@ public class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
         subject.delete(id);
 
-        verify(store).delete(NAMESPACE, id + "", batch);
+        verify(store).delete(NAMESPACE, id + "", transaction);
     }
 
     @Test
@@ -432,21 +432,21 @@ public class EntitiesTests
     {
         final Long id = 45l;
 
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
         subject.delete(id);
 
-        verify(index1).remove(id, batch);
-        verify(index2).remove(id, batch);
-        verify(index3).remove(id, batch);
+        verify(index1).remove(id, transaction);
+        verify(index2).remove(id, transaction);
+        verify(index3).remove(id, transaction);
     }
 
     @Test
     void delete_commitsAllChangesInOneBatch()
     {
-        when(store.startBatch()).thenReturn(batch);
+        when(store.transaction()).thenReturn(transaction);
 
         when(store.exists(anyString(), anyString())).thenReturn(true);
 
@@ -454,10 +454,10 @@ public class EntitiesTests
         // are committed as part of the same batch
         subject.delete(35l);
 
-        final InOrder order = inOrder(store, index1, index2, index3, batch);
+        final InOrder order = inOrder(store, index1, index2, index3, transaction);
 
         // Check no more interactions after the commit
-        order.verify(batch).commit();
+        order.verify(transaction).commit();
         order.verifyNoMoreInteractions();
     }
 }

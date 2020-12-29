@@ -14,7 +14,7 @@ import com.google.cloud.storage.StorageOptions;
 import nherald.indigo.store.IdValidator;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
-import nherald.indigo.uow.BatchUpdate;
+import nherald.indigo.uow.Transaction;
 
 /**
  * Uses GCS buckets/objects to store entities. This was just written
@@ -71,14 +71,14 @@ public class GoogleCloudStorageStore implements Store
     }
 
     @Override
-    public <T> void put(String namespace, String id, T item, BatchUpdate batch)
+    public <T> void put(String namespace, String id, T item, Transaction transaction)
     {
         IdValidator.check(id);
 
         // TODO
     }
 
-    public void delete(String namespace, String id, BatchUpdate batch)
+    public void delete(String namespace, String id, Transaction transaction)
     {
         IdValidator.check(id);
 
@@ -86,7 +86,7 @@ public class GoogleCloudStorageStore implements Store
     }
 
     @Override
-    public BatchUpdate startBatch()
+    public Transaction transaction()
     {
         // TODO
         return null;

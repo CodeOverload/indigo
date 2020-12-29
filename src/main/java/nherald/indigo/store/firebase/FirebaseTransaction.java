@@ -15,12 +15,12 @@ import nherald.indigo.store.StoreException;
 import nherald.indigo.store.firebase.db.FirebaseBatch;
 import nherald.indigo.store.firebase.db.FirebaseDatabase;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
-import nherald.indigo.uow.BatchUpdate;
+import nherald.indigo.uow.Transaction;
 
 /**
- * Single-use batch update transaction
+ * Single-use transaction
  *
- * Notes for methods that apply updates (e.g. FirebaseBatchUpdate#put)
+ * Notes for methods that apply updates (e.g. FirebaseTransaction#put)
  *
  * - If an update to is applied to an entity more than once, only the last will be
  *   applied to the database. There's no point in applying earlier updates when the
@@ -32,9 +32,9 @@ import nherald.indigo.uow.BatchUpdate;
  *   dependencies between each other, so it shouldn't matter which order they're
  *   saved in
  */
-public class FirebaseBatchUpdate implements BatchUpdate
+public class FirebaseTransaction implements Transaction
 {
-    private static final Logger logger = LoggerFactory.getLogger(FirebaseBatchUpdate.class);
+    private static final Logger logger = LoggerFactory.getLogger(FirebaseTransaction.class);
 
     private static final int BATCH_SIZE = 500;
 
@@ -42,7 +42,7 @@ public class FirebaseBatchUpdate implements BatchUpdate
 
     private final Map<String, Update> pending = new HashMap<>(203);
 
-    public FirebaseBatchUpdate(FirebaseDatabase database)
+    public FirebaseTransaction(FirebaseDatabase database)
     {
         this.database = database;
     }
