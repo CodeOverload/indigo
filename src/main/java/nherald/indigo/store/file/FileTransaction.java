@@ -22,6 +22,11 @@ public class FileTransaction implements Transaction
         this.store = store;
     }
 
+    public <T> T get(String namespace, String entityId, Class<T> entityType)
+    {
+        return store.get(namespace, entityId, entityType);
+    }
+
     public <T> void put(String namespace, String entityId, T entity)
     {
         pending.put(getMapKey(namespace, entityId), () -> {

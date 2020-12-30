@@ -14,6 +14,16 @@ package nherald.indigo.uow;
 public interface Transaction
 {
     /**
+     * Fetch a single entity
+     * @param <T> the entity type to deserialise
+     * @param namespace namespace
+     * @param entityId entity id
+     * @param entityType entity type
+     * @return the entity, or null if the entity doesn't exist
+     */
+    <T> T get(String namespace, String entityId, Class<T> entityType);
+
+    /**
      * Stores the supplied entity. If an entity already exists with the
      * specified id, it will be overwritten. Otherwise a new entry will
      * be created with the specified id

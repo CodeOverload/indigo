@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -11,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
+import nherald.indigo.store.StoreException;
+import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
 import nherald.indigo.uow.Transaction;
 
@@ -46,6 +49,26 @@ public class FirebaseTransaction implements Transaction
         this.transaction = transaction;
     }
 
+    @Override
+    public <T> T get(String namespace, String entityId, Class<T> entityType)
+    {
+        final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);
+
+        try
+        {
+            final FirebaseDocument doc = transaction.get(docId);
+
+            if (!doc.exists()) return null;
+
+            return doc.asObject(entityType);
+        }
+        catch (InterruptedException | ExecutionException ex)
+        {
+            throw new StoreException(String.format("Error getting %s/%s", namespace, entityId), ex);
+        }
+    }
+
+    @Override
     public <T> void put(String namespace, String entityId, T entity)
     {
         final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);
@@ -55,6 +78,7 @@ public class FirebaseTransaction implements Transaction
         pending.put(mapKey, () -> transaction.set(docId, entity));
     }
 
+    @Override
     public void delete(String namespace, String entityId)
     {
         final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);

@@ -50,7 +50,7 @@ public class FirebaseStore implements Store
         }
         catch (InterruptedException | ExecutionException ex)
         {
-            throw new StoreException(String.format("Error running query for %s/%s", namespace, String.join(",", ids)), ex);
+            throw new StoreException(String.format("Error getting %s/%s", namespace, String.join(",", ids)), ex);
         }
     }
 
@@ -67,7 +67,7 @@ public class FirebaseStore implements Store
         }
         catch (InterruptedException | ExecutionException ex)
         {
-            throw new StoreException(String.format("Error running query for %s/%s", namespace, id), ex);
+            throw new StoreException(String.format("Error getting %s/%s", namespace, id), ex);
         }
     }
 
