@@ -12,7 +12,7 @@ import nherald.indigo.store.firebase.db.FirebaseDatabase;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
 import nherald.indigo.uow.Transaction;
-import nherald.indigo.uow.TransactionRunnable;
+import nherald.indigo.uow.Consumer;
 
 public class FirebaseStore implements Store
 {
@@ -72,7 +72,7 @@ public class FirebaseStore implements Store
     }
 
     @Override
-    public void transaction(TransactionRunnable<Transaction> runnable)
+    public void transaction(Consumer<Transaction> runnable)
     {
         try
         {

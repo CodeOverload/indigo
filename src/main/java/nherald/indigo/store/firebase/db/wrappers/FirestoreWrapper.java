@@ -10,7 +10,7 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 
 import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
-import nherald.indigo.uow.TransactionRunnable;
+import nherald.indigo.uow.Consumer;
 import nherald.indigo.store.firebase.db.FirebaseDatabase;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
@@ -48,7 +48,7 @@ public class FirestoreWrapper implements FirebaseDatabase
     }
 
     @Override
-    public void transaction(TransactionRunnable<FirebaseRawTransaction> runnable)
+    public void transaction(Consumer<FirebaseRawTransaction> runnable)
         throws InterruptedException, ExecutionException
     {
         database.runTransaction(firebaseTransaction -> {

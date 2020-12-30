@@ -18,7 +18,7 @@ import nherald.indigo.index.Index;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.uow.Transaction;
-import nherald.indigo.uow.TransactionRunnable;
+import nherald.indigo.uow.Consumer;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -459,7 +459,7 @@ class EntitiesTests
     private void mockTransaction()
     {
         doAnswer(invocation -> {
-            final TransactionRunnable runnable = (TransactionRunnable) invocation.getArguments()[0];
+            final Consumer runnable = (Consumer) invocation.getArguments()[0];
             runnable.run(transaction);
             return null;
         }).when(store).transaction(any());

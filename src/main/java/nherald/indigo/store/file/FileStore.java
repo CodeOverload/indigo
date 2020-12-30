@@ -13,7 +13,7 @@ import nherald.indigo.store.IdValidator;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.uow.Transaction;
-import nherald.indigo.uow.TransactionRunnable;
+import nherald.indigo.uow.Consumer;
 
 public class FileStore implements Store
 {
@@ -78,7 +78,7 @@ public class FileStore implements Store
     }
 
     @Override
-    public void transaction(TransactionRunnable<Transaction> runnable)
+    public void transaction(Consumer<Transaction> runnable)
     {
         final FileTransaction transaction = new FileTransaction(this);
 
