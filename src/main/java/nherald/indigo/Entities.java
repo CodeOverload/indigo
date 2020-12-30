@@ -79,7 +79,7 @@ public class Entities<T extends Entity>
 
     private void put(Collection<T> entities, Transaction transaction)
     {
-        final EntitiesInfo info = loadInfo();
+        final EntitiesInfo info = loadInfo(transaction);
 
         entities.stream()
             .forEach(e -> {
@@ -130,9 +130,9 @@ public class Entities<T extends Entity>
         return id + "";
     }
 
-    private EntitiesInfo loadInfo()
+    private EntitiesInfo loadInfo(Transaction transaction)
     {
-        final EntitiesInfo storedInfo = store.get(NAMESPACE, INFO_ID, EntitiesInfo.class);
+        final EntitiesInfo storedInfo = transaction.get(NAMESPACE, INFO_ID, EntitiesInfo.class);
 
         if (storedInfo != null) return storedInfo;
 

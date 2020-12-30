@@ -24,11 +24,13 @@ import nherald.indigo.uow.Consumer;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class EntitiesTests
 {
+    private static final String NAMESPACE = "entities";
+    private static final String INFO_ID = "info";
+
     private static final String WORD1 = "something";
 
     private static final long CURRENT_MAX_ID = 76;
 
-    private static final String NAMESPACE = "entities";
 
     @Mock
     private Index<TestEntity> index1;
@@ -62,7 +64,7 @@ class EntitiesTests
             = List.of(index1, index2, index3);
 
         final EntitiesInfo info = new EntitiesInfo(CURRENT_MAX_ID);
-        when(store.get(NAMESPACE, "info", EntitiesInfo.class)).thenReturn(info);
+        when(transaction.get(NAMESPACE, INFO_ID, EntitiesInfo.class)).thenReturn(info);
 
         subject = new Entities<>(TestEntity.class, indices, store);
     }
@@ -109,7 +111,7 @@ class EntitiesTests
     @Test
     void put_generatesNewId_forNewEntity()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         final TestEntity entity = new TestEntity();
 
@@ -121,7 +123,7 @@ class EntitiesTests
     @Test
     void put_generatesNewId_forNewEntities()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         // Add two entities, the second should get it's own id
         subject.put(new TestEntity());
@@ -135,11 +137,11 @@ class EntitiesTests
     @Test
     void put_generatesNewId_forNewEntity_storeCompletelyEmpty()
     {
-        // Create a completely empty Store instance (crucially, this doesn't have an info object
+        // Create a completely empty Transaction instance (crucially, this doesn't have an info object
         // stored to denote which is the next id)
-        store = mock(Store.class);
+        transaction = mock(Transaction.class);
 
-        mockTransaction();
+        mockTransactionStart();
 
         final List<Index<TestEntity>> indices
             = List.of(index1, index2, index3);
@@ -159,7 +161,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        mockTransaction();
+        mockTransactionStart();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -176,7 +178,7 @@ class EntitiesTests
     @Test
     void put_addsToStore_forNewEntity()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         final TestEntity entity = new TestEntity();
         subject.put(entity);
@@ -187,20 +189,20 @@ class EntitiesTests
     @Test
     void put_updatesMaxId_forNewEntity()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         final TestEntity entity = new TestEntity();
         subject.put(entity);
 
         final EntitiesInfo expectedInfo = new EntitiesInfo(CURRENT_MAX_ID + 1);
 
-        verify(transaction).put(NAMESPACE, "info", expectedInfo);
+        verify(transaction).put(NAMESPACE, INFO_ID, expectedInfo);
     }
 
     @Test
     void put_addsToStore_forNewEntities()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         final TestEntity entity1 = new TestEntity();
         subject.put(entity1);
@@ -215,7 +217,7 @@ class EntitiesTests
     @Test
     void put_addsToStore_forExistingEntity()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         final long id = 65;
 
@@ -231,7 +233,7 @@ class EntitiesTests
     @Test
     void put_doesntIncreaseMaxId_forExistingEntity()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         final long id = 65;
 
@@ -245,13 +247,13 @@ class EntitiesTests
         // changed. This can easily be improved, but at the moment use it to
         // verify the max id doesn't change
         final EntitiesInfo expectedInfo = new EntitiesInfo(CURRENT_MAX_ID);
-        verify(transaction).put(NAMESPACE, "info", expectedInfo);
+        verify(transaction).put(NAMESPACE, INFO_ID, expectedInfo);
     }
 
     @Test
     void put_addsToAllIndices_forNewEntity()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         final TestEntity entity = new TestEntity();
         subject.put(entity);
@@ -270,7 +272,7 @@ class EntitiesTests
     @Test
     void put_addsToAllIndices_forExistingEntity()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         final long id = 65;
 
@@ -292,7 +294,7 @@ class EntitiesTests
     @Test
     void put_doesntTryToDeleteOld_forNewEntity()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         final TestEntity entity = new TestEntity();
 
@@ -306,7 +308,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        mockTransaction();
+        mockTransactionStart();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -324,7 +326,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        mockTransaction();
+        mockTransactionStart();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -345,7 +347,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        mockTransaction();
+        mockTransactionStart();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -368,7 +370,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        mockTransaction();
+        mockTransactionStart();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -394,7 +396,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        mockTransaction();
+        mockTransactionStart();
 
         // No entity of this id is in the store
         when(store.exists(NAMESPACE, id + "")).thenReturn(false);
@@ -411,7 +413,7 @@ class EntitiesTests
     @Test
     void put_multiple_commitsAllChangesInOneBatch()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         when(store.exists(anyString(), anyString())).thenReturn(true);
 
@@ -432,7 +434,7 @@ class EntitiesTests
     @Test
     void put_multiple_updatesMaxId_forNewEntities()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         final TestEntity entity1 = new TestEntity();
         final TestEntity entity2 = new TestEntity();
@@ -440,13 +442,13 @@ class EntitiesTests
 
         final EntitiesInfo expectedInfo = new EntitiesInfo(CURRENT_MAX_ID + 2);
 
-        verify(transaction).put(NAMESPACE, "info", expectedInfo);
+        verify(transaction).put(NAMESPACE, INFO_ID, expectedInfo);
     }
 
     @Test
     void put_multiple_doesntIncreaseMaxId_forExistingEntities()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         final long id1 = 65;
         final long id2 = 14;
@@ -466,7 +468,7 @@ class EntitiesTests
         // changed. This can easily be improved, but at the moment use it to
         // verify the max id doesn't change
         final EntitiesInfo expectedInfo = new EntitiesInfo(CURRENT_MAX_ID);
-        verify(transaction).put(NAMESPACE, "info", expectedInfo);
+        verify(transaction).put(NAMESPACE, INFO_ID, expectedInfo);
     }
 
     @Test
@@ -474,7 +476,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        mockTransaction();
+        mockTransactionStart();
 
         // No entity of this id is in the store
         when(store.exists(NAMESPACE, id + "")).thenReturn(false);
@@ -489,7 +491,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        mockTransaction();
+        mockTransactionStart();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -503,7 +505,7 @@ class EntitiesTests
     {
         final Long id = 45l;
 
-        mockTransaction();
+        mockTransactionStart();
 
         when(store.exists(NAMESPACE, id + "")).thenReturn(true);
 
@@ -517,7 +519,7 @@ class EntitiesTests
     @Test
     void delete_commitsAllChangesInOneBatch()
     {
-        mockTransaction();
+        mockTransactionStart();
 
         when(store.exists(anyString(), anyString())).thenReturn(true);
 
@@ -530,7 +532,7 @@ class EntitiesTests
     }
 
     @SuppressWarnings("unchecked")
-    private void mockTransaction()
+    private void mockTransactionStart()
     {
         // When a transaction is requested, run it as the store would do
         doAnswer(invocation -> {
