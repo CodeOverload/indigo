@@ -185,6 +185,19 @@ class EntitiesTests
     }
 
     @Test
+    void put_updatesMaxId_forNewEntity()
+    {
+        mockTransaction();
+
+        final TestEntity entity = new TestEntity();
+        subject.put(entity);
+
+        final EntitiesInfo expectedInfo = new EntitiesInfo(CURRENT_MAX_ID + 1);
+
+        verify(transaction).put(NAMESPACE, "info", expectedInfo);
+    }
+
+    @Test
     void put_addsToStore_forNewEntities()
     {
         mockTransaction();
@@ -213,6 +226,26 @@ class EntitiesTests
         subject.put(entity);
 
         verify(transaction).put(NAMESPACE, id + "", entity);
+    }
+
+    @Test
+    void put_doesntIncreaseMaxId_forExistingEntity()
+    {
+        mockTransaction();
+
+        final long id = 65;
+
+        when(store.exists(NAMESPACE, id + "")).thenReturn(true);
+
+        final TestEntity entity = new TestEntity();
+        entity.setId(id);
+        subject.put(entity);
+
+        // At the moment, info doc is always re-saved, even if the id hasn't
+        // changed. This can easily be improved, but at the moment use it to
+        // verify the max id doesn't change
+        final EntitiesInfo expectedInfo = new EntitiesInfo(CURRENT_MAX_ID);
+        verify(transaction).put(NAMESPACE, "info", expectedInfo);
     }
 
     @Test
@@ -357,7 +390,26 @@ class EntitiesTests
     }
 
     @Test
-    void put_commitsAllChangesInOneBatch()
+    void put_failsIfEntityIsntInStorage_forExistingEntity()
+    {
+        final Long id = 45l;
+
+        mockTransaction();
+
+        // No entity of this id is in the store
+        when(store.exists(NAMESPACE, id + "")).thenReturn(false);
+
+        // This is (supposed to be) an existing entity as it already has an id
+        final TestEntity entity = new TestEntity();
+        entity.setId(id);
+
+        Assertions.assertThrows(StoreException.class, () -> {
+            subject.put(entity);
+        });
+    }
+
+    @Test
+    void put_multiple_commitsAllChangesInOneBatch()
     {
         mockTransaction();
 
@@ -378,22 +430,43 @@ class EntitiesTests
     }
 
     @Test
-    void put_failsIfEntityIsntInStorage_forExistingEntity()
+    void put_multiple_updatesMaxId_forNewEntities()
     {
-        final Long id = 45l;
-
         mockTransaction();
 
-        // No entity of this id is in the store
-        when(store.exists(NAMESPACE, id + "")).thenReturn(false);
+        final TestEntity entity1 = new TestEntity();
+        final TestEntity entity2 = new TestEntity();
+        subject.put(List.of(entity1, entity2));
 
-        // This is (supposed to be) an existing entity as it already has an id
-        final TestEntity entity = new TestEntity();
-        entity.setId(id);
+        final EntitiesInfo expectedInfo = new EntitiesInfo(CURRENT_MAX_ID + 2);
 
-        Assertions.assertThrows(StoreException.class, () -> {
-            subject.put(entity);
-        });
+        verify(transaction).put(NAMESPACE, "info", expectedInfo);
+    }
+
+    @Test
+    void put_multiple_doesntIncreaseMaxId_forExistingEntities()
+    {
+        mockTransaction();
+
+        final long id1 = 65;
+        final long id2 = 14;
+
+        when(store.exists(NAMESPACE, id1 + "")).thenReturn(true);
+        when(store.exists(NAMESPACE, id2 + "")).thenReturn(true);
+
+        final TestEntity entity1 = new TestEntity();
+        final TestEntity entity2 = new TestEntity();
+
+        entity1.setId(id1);
+        entity2.setId(id2);
+
+        subject.put(List.of(entity1, entity2));
+
+        // At the moment, info doc is always re-saved, even if the id hasn't
+        // changed. This can easily be improved, but at the moment use it to
+        // verify the max id doesn't change
+        final EntitiesInfo expectedInfo = new EntitiesInfo(CURRENT_MAX_ID);
+        verify(transaction).put(NAMESPACE, "info", expectedInfo);
     }
 
     @Test
@@ -456,12 +529,15 @@ class EntitiesTests
         verify(store).transaction(any());
     }
 
+    @SuppressWarnings("unchecked")
     private void mockTransaction()
     {
+        // When a transaction is requested, run it as the store would do
         doAnswer(invocation -> {
-            final Consumer runnable = (Consumer) invocation.getArguments()[0];
-            runnable.run(transaction);
-            return null;
-        }).when(store).transaction(any());
+                final Consumer<Transaction> runnable = (Consumer<Transaction>) invocation.getArguments()[0];
+                runnable.run(transaction);
+                return null;
+            })
+            .when(store).transaction(any());
     }
 }

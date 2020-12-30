@@ -24,8 +24,6 @@ public class Entities<T extends Entity>
 
     private final Store store;
 
-    private final EntitiesInfo info;
-
     public Entities(Class<T> entityType, Collection<Index<T>> indices,
         Store store)
     {
@@ -33,8 +31,6 @@ public class Entities<T extends Entity>
         this.store = store;
 
         this.indices = indices;
-
-        info = loadInfo();
     }
 
     public T get(long id)
@@ -83,13 +79,15 @@ public class Entities<T extends Entity>
 
     private void put(Collection<T> entities, Transaction transaction)
     {
+        final EntitiesInfo info = loadInfo();
+
         entities.stream()
             .forEach(e -> {
                 final long id;
                 // This is a new entity
                 if (e.getId() == null)
                 {
-                    id = generateId(transaction);
+                    id = info.generateId();
                     e.setId(id);
                 }
                 // Existing entity
@@ -105,6 +103,8 @@ public class Entities<T extends Entity>
 
                 addToIndices(e, transaction);
             });
+
+        transaction.put(NAMESPACE, INFO_ID, info);
     }
 
     public void delete(long id)
@@ -123,15 +123,6 @@ public class Entities<T extends Entity>
 
         indices.stream()
             .forEach(index -> index.remove(id, transaction));
-    }
-
-    private long generateId(Transaction transaction)
-    {
-        final long id = info.generateId();
-
-        transaction.put(NAMESPACE, INFO_ID, info);
-
-        return id;
     }
 
     private String asString(long id)
