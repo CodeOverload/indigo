@@ -24,6 +24,14 @@ public interface Transaction
     <T> T get(String namespace, String entityId, Class<T> entityType);
 
     /**
+     * Determine if an entity exists
+     * @param namespace namespace
+     * @param entityId entity id
+     * @return true if the entity with this id is stored, false otherwise
+     */
+    boolean exists(String namespace, String entityId);
+
+    /**
      * Stores the supplied entity. If an entity already exists with the
      * specified id, it will be overwritten. Otherwise a new entry will
      * be created with the specified id

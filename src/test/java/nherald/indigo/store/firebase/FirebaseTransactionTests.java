@@ -78,4 +78,51 @@ class FirebaseTransactionTests
             subject.get(NAMESPACE, "orange", Fruit.class);
         });
     }
+
+    @Test
+    void exists_returnsFalse_whenNotExists()
+        throws InterruptedException, ExecutionException
+    {
+        when(rawTransaction.get(any())).thenReturn(notExistsDoc);
+
+        final boolean actual = subject.exists(NAMESPACE, "45");
+
+        Assertions.assertFalse(actual);
+    }
+
+    @Test
+    void exists_returnsTrue_whenExists()
+        throws InterruptedException, ExecutionException
+    {
+        final String id = "apple";
+        final FirebaseDocumentId docId = new FirebaseDocumentId(NAMESPACE, id);
+
+        when(rawTransaction.get(docId)).thenReturn(appleDocument);
+
+        final boolean actual = subject.exists(NAMESPACE, id);
+
+        Assertions.assertTrue(actual);
+    }
+
+    @Test
+    void exists_throwsStoreException_onInterruptedException()
+        throws InterruptedException, ExecutionException
+    {
+        when(rawTransaction.get(any())).thenThrow(new InterruptedException());
+
+        Assertions.assertThrows(StoreException.class, () -> {
+            subject.exists(NAMESPACE, "orange");
+        });
+    }
+
+    @Test
+    void exists_throwsStoreException_onExecutionException()
+        throws InterruptedException, ExecutionException
+    {
+        when(rawTransaction.get(any())).thenThrow(new ExecutionException(new Throwable()));
+
+        Assertions.assertThrows(StoreException.class, () -> {
+            subject.exists(NAMESPACE, "orange");
+        });
+    }
 }

@@ -27,6 +27,13 @@ public class FileTransaction implements Transaction
         return store.get(namespace, entityId, entityType);
     }
 
+    @Override
+    public boolean exists(String namespace, String entityId)
+    {
+        return store.exists(namespace, entityId);
+    }
+
+    @Override
     public <T> void put(String namespace, String entityId, T entity)
     {
         pending.put(getMapKey(namespace, entityId), () -> {
@@ -34,6 +41,7 @@ public class FileTransaction implements Transaction
         });
     }
 
+    @Override
     public void delete(String namespace, String entityId)
     {
         pending.put(getMapKey(namespace, entityId), () -> {

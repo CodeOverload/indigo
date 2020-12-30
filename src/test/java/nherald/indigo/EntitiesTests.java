@@ -31,7 +31,6 @@ class EntitiesTests
 
     private static final long CURRENT_MAX_ID = 76;
 
-
     @Mock
     private Index<TestEntity> index1;
 
@@ -163,7 +162,7 @@ class EntitiesTests
 
         mockTransactionStart();
 
-        when(store.exists(NAMESPACE, id + "")).thenReturn(true);
+        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         // This is an existing entity as it already has an id
         final TestEntity entity = new TestEntity();
@@ -221,7 +220,7 @@ class EntitiesTests
 
         final long id = 65;
 
-        when(store.exists(NAMESPACE, id + "")).thenReturn(true);
+        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         final TestEntity entity = new TestEntity();
         entity.setId(id);
@@ -237,7 +236,7 @@ class EntitiesTests
 
         final long id = 65;
 
-        when(store.exists(NAMESPACE, id + "")).thenReturn(true);
+        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         final TestEntity entity = new TestEntity();
         entity.setId(id);
@@ -276,7 +275,7 @@ class EntitiesTests
 
         final long id = 65;
 
-        when(store.exists(NAMESPACE, id + "")).thenReturn(true);
+        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         final TestEntity entity = new TestEntity();
         entity.setId(id);
@@ -310,7 +309,7 @@ class EntitiesTests
 
         mockTransactionStart();
 
-        when(store.exists(NAMESPACE, id + "")).thenReturn(true);
+        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         // This is an existing entity as it already has an id
         final TestEntity entity = new TestEntity();
@@ -328,7 +327,7 @@ class EntitiesTests
 
         mockTransactionStart();
 
-        when(store.exists(NAMESPACE, id + "")).thenReturn(true);
+        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         // This is an existing entity as it already has an id
         final TestEntity entity = new TestEntity();
@@ -349,7 +348,7 @@ class EntitiesTests
 
         mockTransactionStart();
 
-        when(store.exists(NAMESPACE, id + "")).thenReturn(true);
+        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         // This is an existing entity as it already has an id
         final TestEntity entity = new TestEntity();
@@ -372,7 +371,7 @@ class EntitiesTests
 
         mockTransactionStart();
 
-        when(store.exists(NAMESPACE, id + "")).thenReturn(true);
+        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         // This is an existing entity as it already has an id
         final TestEntity entity = new TestEntity();
@@ -399,7 +398,7 @@ class EntitiesTests
         mockTransactionStart();
 
         // No entity of this id is in the store
-        when(store.exists(NAMESPACE, id + "")).thenReturn(false);
+        when(transaction.exists(NAMESPACE, id + "")).thenReturn(false);
 
         // This is (supposed to be) an existing entity as it already has an id
         final TestEntity entity = new TestEntity();
@@ -415,7 +414,7 @@ class EntitiesTests
     {
         mockTransactionStart();
 
-        when(store.exists(anyString(), anyString())).thenReturn(true);
+        when(transaction.exists(anyString(), anyString())).thenReturn(true);
 
         // Put two entities at the same time and check they're all committed as part of the same batch.
         // Will involve various deletes and re-adds
@@ -453,8 +452,8 @@ class EntitiesTests
         final long id1 = 65;
         final long id2 = 14;
 
-        when(store.exists(NAMESPACE, id1 + "")).thenReturn(true);
-        when(store.exists(NAMESPACE, id2 + "")).thenReturn(true);
+        when(transaction.exists(NAMESPACE, id1 + "")).thenReturn(true);
+        when(transaction.exists(NAMESPACE, id2 + "")).thenReturn(true);
 
         final TestEntity entity1 = new TestEntity();
         final TestEntity entity2 = new TestEntity();
@@ -479,7 +478,7 @@ class EntitiesTests
         mockTransactionStart();
 
         // No entity of this id is in the store
-        when(store.exists(NAMESPACE, id + "")).thenReturn(false);
+        when(transaction.exists(NAMESPACE, id + "")).thenReturn(false);
 
         Assertions.assertThrows(StoreException.class, () -> {
             subject.delete(id);
@@ -493,7 +492,7 @@ class EntitiesTests
 
         mockTransactionStart();
 
-        when(store.exists(NAMESPACE, id + "")).thenReturn(true);
+        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         subject.delete(id);
 
@@ -507,7 +506,7 @@ class EntitiesTests
 
         mockTransactionStart();
 
-        when(store.exists(NAMESPACE, id + "")).thenReturn(true);
+        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         subject.delete(id);
 
@@ -521,7 +520,7 @@ class EntitiesTests
     {
         mockTransactionStart();
 
-        when(store.exists(anyString(), anyString())).thenReturn(true);
+        when(transaction.exists(anyString(), anyString())).thenReturn(true);
 
         // Delete an entity and check all changes (store deletion, index deletion etc)
         // are committed as part of the same batch

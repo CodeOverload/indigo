@@ -69,6 +69,23 @@ public class FirebaseTransaction implements Transaction
     }
 
     @Override
+    public boolean exists(String namespace, String entityId)
+    {
+        final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);
+
+        try
+        {
+            final FirebaseDocument doc = transaction.get(docId);
+
+            return doc.exists();
+        }
+        catch (InterruptedException | ExecutionException ex)
+        {
+            throw new StoreException(String.format("Error getting %s/%s", namespace, entityId), ex);
+        }
+    }
+
+    @Override
     public <T> void put(String namespace, String entityId, T entity)
     {
         final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);

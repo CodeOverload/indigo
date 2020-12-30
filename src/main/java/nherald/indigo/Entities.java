@@ -114,7 +114,7 @@ public class Entities<T extends Entity>
 
     private void delete(long id, Transaction transaction)
     {
-        if (!store.exists(NAMESPACE, asString(id)))
+        if (!transaction.exists(NAMESPACE, asString(id)))
         {
             throw new StoreException(String.format("Entity %s doesn't exist", id));
         }
