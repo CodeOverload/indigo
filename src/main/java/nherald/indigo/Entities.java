@@ -10,7 +10,7 @@ import nherald.indigo.index.Index;
 import nherald.indigo.index.terms.BasicTokeniser;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
-import nherald.indigo.uow.Transaction;
+import nherald.indigo.store.uow.Transaction;
 
 public class Entities<T extends Entity>
 {

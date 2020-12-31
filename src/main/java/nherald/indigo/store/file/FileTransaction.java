@@ -7,7 +7,7 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import nherald.indigo.uow.Transaction;
+import nherald.indigo.store.uow.Transaction;
 
 public class FileTransaction implements Transaction
 {

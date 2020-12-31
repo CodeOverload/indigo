@@ -10,7 +10,7 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 
 import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
-import nherald.indigo.uow.Consumer;
+import nherald.indigo.store.uow.Consumer;
 import nherald.indigo.store.firebase.db.FirebaseDatabase;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;

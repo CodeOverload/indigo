@@ -12,8 +12,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import nherald.indigo.store.IdValidator;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
-import nherald.indigo.uow.Transaction;
-import nherald.indigo.uow.Consumer;
+import nherald.indigo.store.uow.Consumer;
+import nherald.indigo.store.uow.Transaction;
 
 public class FileStore implements Store
 {

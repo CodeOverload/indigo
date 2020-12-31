@@ -3,8 +3,8 @@ package nherald.indigo.store;
 import java.util.Collection;
 import java.util.List;
 
-import nherald.indigo.uow.Transaction;
-import nherald.indigo.uow.Consumer;
+import nherald.indigo.store.uow.Consumer;
+import nherald.indigo.store.uow.Transaction;
 
 /**
  * Stores entities (documents/objects/etc) to persistent storage.

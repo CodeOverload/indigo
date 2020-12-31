@@ -1,4 +1,4 @@
-package nherald.indigo.uow;
+package nherald.indigo.store.uow;
 
 @FunctionalInterface
 public interface Consumer<T>

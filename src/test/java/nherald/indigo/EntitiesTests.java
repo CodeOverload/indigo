@@ -17,8 +17,8 @@ import static org.mockito.Mockito.*;
 import nherald.indigo.index.Index;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
-import nherald.indigo.uow.Transaction;
-import nherald.indigo.uow.Consumer;
+import nherald.indigo.store.uow.Consumer;
+import nherald.indigo.store.uow.Transaction;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)

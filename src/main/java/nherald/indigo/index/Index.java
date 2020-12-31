@@ -9,7 +9,7 @@ import nherald.indigo.Entity;
 import nherald.indigo.index.terms.WordFilter;
 import nherald.indigo.store.IdValidator;
 import nherald.indigo.store.Store;
-import nherald.indigo.uow.Transaction;
+import nherald.indigo.store.uow.Transaction;
 
 /**
  * Represents an index, which stores key value pairs. Typically words/prefixes/values, which map

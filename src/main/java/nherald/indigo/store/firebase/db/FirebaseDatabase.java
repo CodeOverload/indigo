@@ -3,7 +3,7 @@ package nherald.indigo.store.firebase.db;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import nherald.indigo.uow.Consumer;
+import nherald.indigo.store.uow.Consumer;
 
 public interface FirebaseDatabase
 {

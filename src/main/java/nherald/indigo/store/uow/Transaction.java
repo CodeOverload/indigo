@@ -1,4 +1,4 @@
-package nherald.indigo.uow;
+package nherald.indigo.store.uow;
 
 /**
  * A single transaction. Different Store implementations have different

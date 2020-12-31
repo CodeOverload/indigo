@@ -18,7 +18,7 @@ import nherald.indigo.TestEntity;
 import nherald.indigo.index.terms.WordFilter;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
-import nherald.indigo.uow.Transaction;
+import nherald.indigo.store.uow.Transaction;
 
 @ExtendWith(MockitoExtension.class)
 class IndexTests

@@ -12,10 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
+import nherald.indigo.store.uow.Transaction;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
-import nherald.indigo.uow.Transaction;
 
 /**
  * Single-use transaction

@@ -11,8 +11,8 @@ import nherald.indigo.store.StoreException;
 import nherald.indigo.store.firebase.db.FirebaseDatabase;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
-import nherald.indigo.uow.Transaction;
-import nherald.indigo.uow.Consumer;
+import nherald.indigo.store.uow.Consumer;
+import nherald.indigo.store.uow.Transaction;
 
 public class FirebaseStore implements Store
 {
