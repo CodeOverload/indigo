@@ -13,6 +13,7 @@ import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
 import nherald.indigo.store.uow.Consumer;
 import nherald.indigo.store.uow.Transaction;
+import nherald.indigo.store.uow.WrapTransaction;
 
 public class FirebaseStore implements Store
 {
@@ -72,14 +73,19 @@ public class FirebaseStore implements Store
     }
 
     @Override
-    public void transaction(Consumer<Transaction> runnable)
+    public <T extends Transaction> void transaction(Consumer<T> runnable,
+        WrapTransaction<T> wrapFunction)
     {
         try
         {
             database.transaction(rawTransaction -> {
+                // Convert the raw database transaction into a Transaction instance
                 final FirebaseTransaction transaction = new FirebaseTransaction(rawTransaction);
 
-                runnable.run(transaction);
+                // Wrap the transaction using the specified function
+                final T wrappedTransaction = wrapFunction.wrap(transaction);
+
+                runnable.run(wrappedTransaction);
 
                 transaction.flush();
             });

@@ -14,6 +14,7 @@ import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.uow.Consumer;
 import nherald.indigo.store.uow.Transaction;
+import nherald.indigo.store.uow.WrapTransaction;
 
 public class FileStore implements Store
 {
@@ -78,11 +79,15 @@ public class FileStore implements Store
     }
 
     @Override
-    public void transaction(Consumer<Transaction> runnable)
+    public <T extends Transaction> void transaction(Consumer<T> runnable,
+        WrapTransaction<T> wrapFunction)
     {
         final FileTransaction transaction = new FileTransaction(this);
 
-        runnable.run(transaction);
+        // Wrap the transaction using the specified function
+        final T wrappedTransaction = wrapFunction.wrap(transaction);
+
+        runnable.run(wrappedTransaction);
 
         transaction.commit();
     }

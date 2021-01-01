@@ -18,6 +18,9 @@ import static org.mockito.Mockito.*;
 import nherald.indigo.store.firebase.db.FirebaseDatabase;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
+import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
+import nherald.indigo.store.uow.Consumer;
+import nherald.indigo.store.uow.Transaction;
 import nherald.indigo.utils.Fruit;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +40,15 @@ public class FirebaseStoreTests
 
     @Mock
     private FirebaseDatabase database;
+
+    @Mock
+    private FirebaseRawTransaction rawTransaction;
+
+    @Mock
+    private Transaction wrappedTransaction;
+
+    @Mock
+    private Consumer<Transaction> runnable;
 
     private FirebaseStore subject;
 
@@ -118,6 +130,31 @@ public class FirebaseStoreTests
         final List<Fruit> expected = Arrays.asList(apple, null, orange);
 
         Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    void transaction_wrapsInnerTransaction()
+        throws InterruptedException, ExecutionException
+    {
+        // When a transaction is requested from the underlying database instance,
+        // run the specified runnable just as the database would
+        doAnswer(invocation -> {
+                @SuppressWarnings("unchecked")
+                final Consumer<FirebaseRawTransaction> runnable = (Consumer<FirebaseRawTransaction>) invocation.getArguments()[0];
+                runnable.run(rawTransaction);
+                return null;
+            })
+            .when(database).transaction(any());
+
+
+        subject.transaction(
+            runnable,
+            // In the function that wraps, just return a new transaction (that
+            // represents a wrapped transaction)
+            rawTransaction -> wrappedTransaction);
+
+        // It should call run() on the wrapped transaction, not the original
+        verify(runnable).run(eq(wrappedTransaction));
     }
 
     private static final List<FirebaseDocumentId> createIds(String ... ids)

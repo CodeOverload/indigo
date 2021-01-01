@@ -45,7 +45,7 @@ class EntitiesTests
     private Store store;
 
     @Mock
-    private Transaction transaction;
+    private TransactionWithCache transaction;
 
     private Entities<TestEntity> subject;
 
@@ -139,7 +139,7 @@ class EntitiesTests
     {
         // Create a completely empty Transaction instance (crucially, this doesn't have an info object
         // stored to denote which is the next id)
-        transaction = mock(Transaction.class);
+        transaction = mock(TransactionWithCache.class);
 
         mockTransactionStart();
 
@@ -428,7 +428,7 @@ class EntitiesTests
         subject.put(List.of(entity1, entity2));
 
         // Only one transaction requested
-        verify(store).transaction(any());
+        verify(store).transaction(any(), any());
     }
 
     @Test
@@ -528,7 +528,7 @@ class EntitiesTests
         subject.delete(35l);
 
         // Only one transaction requested
-        verify(store).transaction(any());
+        verify(store).transaction(any(), any());
     }
 
     @SuppressWarnings("unchecked")
@@ -537,9 +537,10 @@ class EntitiesTests
         // When a transaction is requested, run it as the store would do
         doAnswer(invocation -> {
                 final Consumer<Transaction> runnable = (Consumer<Transaction>) invocation.getArguments()[0];
+                // Run it with our mock transaction
                 runnable.run(transaction);
                 return null;
             })
-            .when(store).transaction(any());
+            .when(store).transaction(any(), any());
     }
 }

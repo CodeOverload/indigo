@@ -75,9 +75,7 @@ public class Entities<T extends Entity>
 
     public void put(Collection<T> entities)
     {
-        store.transaction(
-            runTransaction(transaction -> put(entities, transaction))
-        );
+        runTransaction(transaction -> put(entities, transaction));
     }
 
     private void put(Collection<T> entities, Transaction transaction)
@@ -112,9 +110,7 @@ public class Entities<T extends Entity>
 
     public void delete(long id)
     {
-        store.transaction(
-            runTransaction(transaction -> delete(id, transaction))
-        );
+        runTransaction(transaction -> delete(id, transaction));
     }
 
     private void delete(long id, Transaction transaction)
@@ -130,6 +126,15 @@ public class Entities<T extends Entity>
             .forEach(index -> index.remove(id, transaction));
     }
 
+    private void runTransaction(Consumer<Transaction> runnable)
+    {
+        // Wrap the store transaction with a cachable wrapper. Note that
+        // the store may re-run transactions (e.g. if there were conflicting
+        // updates from another process), so need to start with a new cache
+        // each time; each transaction must not update application state
+        store.transaction(runnable, TransactionWithCache::new);
+    }
+
     private String asString(long id)
     {
         return id + "";
@@ -142,18 +147,6 @@ public class Entities<T extends Entity>
         if (storedInfo != null) return storedInfo;
 
         return new EntitiesInfo();
-    }
-
-    private Consumer<Transaction> runTransaction(Consumer<Transaction> runnable)
-    {
-        return transaction -> {
-            // Wrap the store transaction with a cachable wrapper. Note that
-            // the store may re-run transactions (e.g. if there were conflicting
-            // updates from another process), so need to start with a new cache
-            // each time; each transaction must not update application state
-            final TransactionWithCache t = new TransactionWithCache(transaction);
-            runnable.run(t);
-        };
     }
 
     private void addToIndices(T entity, Transaction transaction)

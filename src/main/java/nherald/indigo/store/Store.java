@@ -5,6 +5,7 @@ import java.util.List;
 
 import nherald.indigo.store.uow.Consumer;
 import nherald.indigo.store.uow.Transaction;
+import nherald.indigo.store.uow.WrapTransaction;
 
 /**
  * Stores entities (documents/objects/etc) to persistent storage.
@@ -15,5 +16,5 @@ public interface Store extends StoreReadOps
 {
     <T> List<T> get(String namespace, Collection<String> ids, Class<T> itemType);
 
-    void transaction(Consumer<Transaction> runnable);
+    <T extends Transaction> void transaction(Consumer<T> runnable, WrapTransaction<T> wrapFunction);
 }
