@@ -19,6 +19,7 @@ import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.uow.Consumer;
 import nherald.indigo.store.uow.Transaction;
+import nherald.indigo.utils.TestEntity;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -263,9 +264,9 @@ class EntitiesTests
         final List<String> words2 = List.of("wordC");
         final List<String> words3 = List.of("wordD");
 
-        verify(index1).add(words1, id, transaction);
-        verify(index2).add(words2, id, transaction);
-        verify(index3).add(words3, id, transaction);
+        verify(index1).add(eq(words1), eq(id), any());
+        verify(index2).add(eq(words2), eq(id), any());
+        verify(index3).add(eq(words3), eq(id), any());
     }
 
     @Test
@@ -285,9 +286,9 @@ class EntitiesTests
         final List<String> words2 = List.of("wordC");
         final List<String> words3 = List.of("wordD");
 
-        verify(index1).add(words1, id, transaction);
-        verify(index2).add(words2, id, transaction);
-        verify(index3).add(words3, id, transaction);
+        verify(index1).add(eq(words1), eq(id), any());
+        verify(index2).add(eq(words2), eq(id), any());
+        verify(index3).add(eq(words3), eq(id), any());
     }
 
     @Test
@@ -336,9 +337,9 @@ class EntitiesTests
         subject.put(entity);
 
         // Old entries should be removed
-        verify(index1).remove(id, transaction);
-        verify(index2).remove(id, transaction);
-        verify(index3).remove(id, transaction);
+        verify(index1).remove(eq(id), any());
+        verify(index2).remove(eq(id), any());
+        verify(index3).remove(eq(id), any());
     }
 
     @Test
@@ -386,8 +387,8 @@ class EntitiesTests
         // Earlier tests just check delete & put are called independently. Check
         // they're done in the correct order here. Note; just checking one of the
         // indices here - no need to check the others
-        order.verify(index1).remove(id, transaction);
-        order.verify(index1).add(words1, id, transaction);
+        order.verify(index1).remove(eq(id), any());
+        order.verify(index1).add(eq(words1), eq(id), any());
     }
 
     @Test
@@ -510,9 +511,9 @@ class EntitiesTests
 
         subject.delete(id);
 
-        verify(index1).remove(id, transaction);
-        verify(index2).remove(id, transaction);
-        verify(index3).remove(id, transaction);
+        verify(index1).remove(eq(id), any());
+        verify(index2).remove(eq(id), any());
+        verify(index3).remove(eq(id), any());
     }
 
     @Test

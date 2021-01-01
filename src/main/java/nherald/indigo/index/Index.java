@@ -1,14 +1,12 @@
 package nherald.indigo.index;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import nherald.indigo.Entity;
 import nherald.indigo.index.terms.WordFilter;
 import nherald.indigo.store.IdValidator;
-import nherald.indigo.store.Store;
+import nherald.indigo.store.StoreReadOps;
 import nherald.indigo.store.uow.Transaction;
 
 /**
@@ -34,14 +32,10 @@ public class Index<T extends Entity>
     private final String id;
     private final IndexTarget<T> target;
     private final WordFilter wordFilter;
-    private final Store store;
-
-    private final Map<String, IndexSegment> cache = new HashMap<>(201);
-
-    private Contents cachedContents;
+    private final StoreReadOps store;
 
     public Index(String id, IndexTarget<T> target,
-        WordFilter wordFilter, Store store)
+        WordFilter wordFilter, StoreReadOps store)
     {
         this.id = id;
         this.target = target;
@@ -61,7 +55,7 @@ public class Index<T extends Entity>
 
     public Set<Long> get(String word)
     {
-        final IndexSegment segment = getSegmentForWord(word);
+        final IndexSegment segment = getSegmentForWord(word, store);
 
         return segment.get(word);
     }
@@ -75,7 +69,7 @@ public class Index<T extends Entity>
 
     private void add(String prefix, long entityId, Transaction transaction)
     {
-        final IndexSegment segment = getSegmentForWord(prefix);
+        final IndexSegment segment = getSegmentForWord(prefix, transaction);
 
         segment.add(prefix, entityId);
 
@@ -84,20 +78,20 @@ public class Index<T extends Entity>
         transaction.put(NAMESPACE, getStoreId(segmentId), segment);
 
         // Update the contents
-        final Contents contents = getContents();
+        final Contents contents = getContents(transaction);
         contents.add(entityId, segmentId);
         saveContents(contents, transaction);
     }
 
     public void remove(long entityId, Transaction transaction)
     {
-        final Contents contents = getContents();
+        final Contents contents = getContents(transaction);
 
         final Set<String> segmentIds = contents.get(entityId);
 
         segmentIds.stream()
             .forEach(segmentId -> {
-                final IndexSegment segment = getSegmentById(segmentId);
+                final IndexSegment segment = getSegmentById(segmentId, transaction);
                 segment.remove(entityId);
 
                 transaction.put(NAMESPACE, getStoreId(segmentId), segment);
@@ -112,31 +106,13 @@ public class Index<T extends Entity>
         return word.substring(0, 2);
     }
 
-    private IndexSegment getSegmentForWord(String word)
+    private IndexSegment getSegmentForWord(String word, StoreReadOps transaction)
     {
         final String segmentId = getSegmentId(word);
 
         IdValidator.check(segmentId);
 
-        return getSegmentById(segmentId);
-    }
-
-    private IndexSegment getSegmentById(String segmentId)
-    {
-        IndexSegment segment = cache.get(segmentId);
-
-        // Already cached
-        if (segment != null)
-        {
-            return segment;
-        }
-
-        segment = load(segmentId);
-
-        // Cache it so that updates accumulate
-        cache.put(segmentId, segment);
-
-        return segment;
+        return getSegmentById(segmentId, transaction);
     }
 
     private String getStoreId(String segmentId)
@@ -144,12 +120,12 @@ public class Index<T extends Entity>
         return String.format("%s-%s", getId(), segmentId);
     }
 
-    private IndexSegment load(String segmentId)
+    private IndexSegment getSegmentById(String segmentId, StoreReadOps transaction)
     {
         final String filename = String.format("%s-%s", getId(), segmentId);
 
         // Load from persistent storage if it's saved
-        final IndexSegment loadedSegment = store.get(NAMESPACE, filename, IndexSegment.class);
+        final IndexSegment loadedSegment = transaction.get(NAMESPACE, filename, IndexSegment.class);
 
         if (loadedSegment != null) return loadedSegment;
 
@@ -157,22 +133,11 @@ public class Index<T extends Entity>
         return new IndexSegment();
     }
 
-    private Contents getContents()
-    {
-        // Already loaded
-        if (cachedContents != null) return cachedContents;
-
-        // Load from persistent storage
-        cachedContents = loadContents();
-
-        return cachedContents;
-    }
-
-    private Contents loadContents()
+    private Contents getContents(Transaction transaction)
     {
         final String storeId = getContentsId();
 
-        final Contents loadedContents = store.get(NAMESPACE, storeId, Contents.class);
+        final Contents loadedContents = transaction.get(NAMESPACE, storeId, Contents.class);
 
         if (loadedContents != null) return loadedContents;
 

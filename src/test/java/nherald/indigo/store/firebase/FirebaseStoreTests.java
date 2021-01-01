@@ -18,6 +18,7 @@ import static org.mockito.Mockito.*;
 import nherald.indigo.store.firebase.db.FirebaseDatabase;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
+import nherald.indigo.utils.Fruit;
 
 @ExtendWith(MockitoExtension.class)
 public class FirebaseStoreTests

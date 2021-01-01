@@ -15,6 +15,7 @@ import nherald.indigo.store.StoreException;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
 import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
+import nherald.indigo.utils.Fruit;
 
 @ExtendWith(MockitoExtension.class)
 class FirebaseTransactionTests

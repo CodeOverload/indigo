@@ -20,19 +20,25 @@ import nherald.indigo.store.firebase.db.FirebaseDocumentId;
 /**
  * Single-use transaction
  *
- * <p>Update operations (put/delete) will be batched up and run at the end.
- * This is a Firestore restriction; all updates must appear after any get/read
- * operations
+ * <p>In a firestore transaction, all read operations (if any) must be run
+ * prior to the updates. To adhere to this, update operations (put/delete)
+ * will be batched up by this class and applied at the end.
  *
- * <p>If an update to is applied to an entity more than once, only the last will be
- * applied to the database. There's no point in applying earlier updates when the
- * later one will overwrite it. Additionally, Firestore doesn't allow multiple
- * writes within the same second on the same object
+ * <p>Firestore doesn't allow multiple writes to the same object within the
+ * same second. To avoid this, if an update is applied to an object more
+ * than once, only the last update to that object will be applied to the
+ * database. Later updates take precedence, so earlier operations should not
+ * matter. E.g. if object A is updated to version A1, then later updated to
+ * A2, the final state is A2 and therefore A1 is redundant. There is however
+ * an edge case which counters this; if a new object N is added, and then
+ * later deleted, the delete will be applied to the database but not the add
+ * operation. As N was new, the database delete will fail because that object
+ * didn't exist in the database. This isn't a case we envisage needing to
+ * handle (it's not needed for the Entities logic), but may need to be beared
+ * in mind for future changes
  *
- * <p>Updates may be run in any order, regardless of the order they were added.
- * All entities are stored independently on the filesystem with no hard
- * dependencies between each other, so it shouldn't matter which order they're
- * saved in
+ * <p>There's no guarantee that objects (relative to each other) will be
+ * updated in the database in the order the updates were applied
  */
 public class FirebaseTransaction implements Transaction
 {

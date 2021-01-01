@@ -11,13 +11,9 @@ import nherald.indigo.store.uow.Transaction;
  *
  * Implementations are not intended to be thread safe
  */
-public interface Store
+public interface Store extends StoreReadOps
 {
-    <T> T get(String namespace, String id, Class<T> itemType);
-
     <T> List<T> get(String namespace, Collection<String> ids, Class<T> itemType);
-
-    boolean exists(String namespace, String id);
 
     void transaction(Consumer<Transaction> runnable);
 }

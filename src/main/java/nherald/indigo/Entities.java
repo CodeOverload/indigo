@@ -10,6 +10,7 @@ import nherald.indigo.index.Index;
 import nherald.indigo.index.terms.BasicTokeniser;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
+import nherald.indigo.store.uow.Consumer;
 import nherald.indigo.store.uow.Transaction;
 
 public class Entities<T extends Entity>
@@ -74,7 +75,9 @@ public class Entities<T extends Entity>
 
     public void put(Collection<T> entities)
     {
-        store.transaction(transaction -> put(entities, transaction));
+        store.transaction(
+            runTransaction(transaction -> put(entities, transaction))
+        );
     }
 
     private void put(Collection<T> entities, Transaction transaction)
@@ -109,7 +112,9 @@ public class Entities<T extends Entity>
 
     public void delete(long id)
     {
-        store.transaction(transaction -> delete(id, transaction));
+        store.transaction(
+            runTransaction(transaction -> delete(id, transaction))
+        );
     }
 
     private void delete(long id, Transaction transaction)
@@ -137,6 +142,18 @@ public class Entities<T extends Entity>
         if (storedInfo != null) return storedInfo;
 
         return new EntitiesInfo();
+    }
+
+    private Consumer<Transaction> runTransaction(Consumer<Transaction> runnable)
+    {
+        return transaction -> {
+            // Wrap the store transaction with a cachable wrapper. Note that
+            // the store may re-run transactions (e.g. if there were conflicting
+            // updates from another process), so need to start with a new cache
+            // each time; each transaction must not update application state
+            final TransactionWithCache t = new TransactionWithCache(transaction);
+            runnable.run(t);
+        };
     }
 
     private void addToIndices(T entity, Transaction transaction)

@@ -1,4 +1,6 @@
-package nherald.indigo;
+package nherald.indigo.utils;
+
+import nherald.indigo.Entity;
 
 public class TestEntity implements Entity
 {

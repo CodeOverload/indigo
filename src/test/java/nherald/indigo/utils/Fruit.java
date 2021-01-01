@@ -1,6 +1,6 @@
-package nherald.indigo.store.firebase;
+package nherald.indigo.utils;
 
-class Fruit
+public class Fruit
 {
     private final String name;
 
