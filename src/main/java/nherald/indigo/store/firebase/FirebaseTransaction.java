@@ -1,5 +1,6 @@
 package nherald.indigo.store.firebase;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,21 +57,33 @@ public class FirebaseTransaction implements Transaction
     }
 
     @Override
-    public <T> T get(String namespace, String entityId, Class<T> entityType)
+    public <T> T get(String namespace, String id, Class<T> entityType)
     {
-        final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);
+        return get(namespace, Arrays.asList(id), entityType).get(0);
+    }
+
+    @Override
+    public <T> List<T> get(String namespace, List<String> ids, Class<T> entityType)
+    {
+        final List<FirebaseDocumentId> docIds = ids.stream()
+            .map(id -> new FirebaseDocumentId(namespace, id))
+            .collect(Collectors.toList());
 
         try
         {
-            final FirebaseDocument doc = transaction.get(docId);
+            final List<FirebaseDocument> docs = transaction.getAll(docIds);
 
-            if (!doc.exists()) return null;
+            return docs.stream()
+                .map(doc -> {
+                    if (!doc.exists()) return null;
 
-            return doc.asObject(entityType);
+                    return doc.asObject(entityType);
+                })
+                .collect(Collectors.toList());
         }
         catch (InterruptedException | ExecutionException ex)
         {
-            throw new StoreException(String.format("Error getting %s/%s", namespace, entityId), ex);
+            throw new StoreException(String.format("Error getting %s/%s", namespace, String.join(",", ids)), ex);
         }
     }
 

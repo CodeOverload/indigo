@@ -1,6 +1,7 @@
 package nherald.indigo.store.file;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -25,6 +26,11 @@ public class FileTransaction implements Transaction
     public <T> T get(String namespace, String entityId, Class<T> entityType)
     {
         return store.get(namespace, entityId, entityType);
+    }
+
+    public <T> List<T> get(String namespace, List<String> entityIds, Class<T> entityType)
+    {
+        return store.get(namespace, entityIds, entityType);
     }
 
     @Override

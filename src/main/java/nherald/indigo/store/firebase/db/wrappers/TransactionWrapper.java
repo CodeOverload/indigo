@@ -1,8 +1,11 @@
 package nherald.indigo.store.firebase.db.wrappers;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Transaction;
 
@@ -28,6 +31,20 @@ public class TransactionWrapper implements FirebaseRawTransaction
         final ApiFuture<DocumentSnapshot> doc = transaction.get(database.asRef(id));
 
         return new DocumentSnapshotWrapper(doc.get());
+    }
+
+    @Override
+    public List<FirebaseDocument> getAll(List<FirebaseDocumentId> ids)
+        throws InterruptedException, ExecutionException
+    {
+        final DocumentReference[] docIds = ids.stream()
+            .map(database::asRef)
+            .toArray(DocumentReference[]::new);
+
+        return transaction.getAll(docIds).get()
+            .stream()
+            .map(DocumentSnapshotWrapper::new)
+            .collect(Collectors.toList());
     }
 
     @Override

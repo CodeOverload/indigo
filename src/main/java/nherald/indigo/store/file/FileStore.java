@@ -3,7 +3,6 @@ package nherald.indigo.store.file;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,7 +34,7 @@ public class FileStore implements Store
     }
 
     @Override
-    public <T> List<T> get(String namespace, Collection<String> ids, Class<T> itemType)
+    public <T> List<T> get(String namespace, List<String> ids, Class<T> itemType)
     {
         return ids.stream()
             .map(IdValidator::check)

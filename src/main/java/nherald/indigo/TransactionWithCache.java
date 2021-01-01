@@ -1,7 +1,9 @@
 package nherald.indigo;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import nherald.indigo.store.uow.Transaction;
 
@@ -47,6 +49,44 @@ public class TransactionWithCache implements Transaction
     }
 
     @Override
+    public <T> List<T> get(String namespace, List<String> ids, Class<T> entityType)
+    {
+        // Create slots for the results, each containing the id and index
+        final List<ResultSlot<T>> slots = ids.stream()
+            .map(id -> new ResultSlot<T>(namespace, id))
+            .collect(Collectors.toList());
+
+        // Determine which entities aren't cached
+        final List<ResultSlot<T>> notCached = slots.stream()
+            .filter(slot -> !slot.isCached())
+            .collect(Collectors.toList());
+
+        // Fetch those that aren't
+        if (!notCached.isEmpty())
+        {
+            final List<String> notCachedIds = notCached.stream()
+                .map(ResultSlot::getEntityId)
+                .collect(Collectors.toList());
+
+            final List<T> entities = transaction.get(namespace, notCachedIds, entityType);
+
+            for (int i = 0; i < entities.size(); ++i)
+            {
+                final ResultSlot<T> slot = notCached.get(i);
+
+                slot.setResult(entities.get(i));
+
+                // Cache the newly fetched entry
+                cache.put(slot.getCacheKey(), entities.get(i));
+            }
+        }
+
+        return slots.stream()
+            .map(ResultSlot::getResult)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public boolean exists(String namespace, String entityId)
     {
         final MapKey key = new MapKey(namespace, entityId);
@@ -83,6 +123,52 @@ public class TransactionWithCache implements Transaction
     private <T> T getFromCache(MapKey key)
     {
         return (T) cache.get(key);
+    }
+
+    private class ResultSlot<T>
+    {
+        private final String entityId;
+        private final MapKey cacheKey;
+        private final boolean isCached;
+        private T result;
+
+        public ResultSlot(String namespace, String entityId)
+        {
+            this.entityId = entityId;
+            this.cacheKey = new MapKey(namespace, entityId);
+
+            this.isCached = cache.containsKey(cacheKey);
+
+            if (isCached)
+            {
+                result = getFromCache(cacheKey);
+            }
+        }
+
+        public String getEntityId()
+        {
+            return entityId;
+        }
+
+        public boolean isCached()
+        {
+            return isCached;
+        }
+
+        public T getResult()
+        {
+            return result;
+        }
+
+        public void setResult(T result)
+        {
+            this.result = result;
+        }
+
+        public MapKey getCacheKey()
+        {
+            return cacheKey;
+        }
     }
 
     private static class MapKey

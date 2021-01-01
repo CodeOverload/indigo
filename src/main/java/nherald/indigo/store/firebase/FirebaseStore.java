@@ -1,7 +1,6 @@
 package nherald.indigo.store.firebase;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -31,7 +30,7 @@ public class FirebaseStore implements Store
     }
 
     @Override
-    public <T> List<T> get(String namespace, Collection<String> ids, Class<T> itemType)
+    public <T> List<T> get(String namespace, List<String> ids, Class<T> itemType)
     {
         final List<FirebaseDocumentId> docIds = ids.stream()
             .map(id -> new FirebaseDocumentId(namespace, id))

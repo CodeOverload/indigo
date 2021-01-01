@@ -2,6 +2,8 @@ package nherald.indigo;
 
 import static org.mockito.Mockito.*;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +25,8 @@ class TransactionWithCacheTests
 
     private static final Fruit apple = new Fruit("Apple");
     private static final Fruit orange = new Fruit("Orange");
+    private static final Fruit banana = new Fruit("Banana");
+    private static final Fruit melon = new Fruit("Melon");
 
     @Mock
     private Transaction transaction;
@@ -102,6 +106,96 @@ class TransactionWithCacheTests
 
         // It should only load from the underlying transaction once
         verify(transaction).get(NAMESPACE1, id, Fruit.class);
+    }
+
+    @Test
+    void get_multiple_returnsEntities_whenNoneCached()
+    {
+        final String id1 = "a";
+        final String id2 = "b";
+
+        when(transaction.get(NAMESPACE1, List.of(id1, id2), Fruit.class))
+            .thenReturn(List.of(apple, orange));
+
+        final List<Fruit> actual = subject.get(NAMESPACE1, List.of(id1, id2), Fruit.class);
+
+        final List<Fruit> expected = List.of(apple, orange);
+
+        Assertions.assertEquals(expected, actual);
+
+        // Should only be one look-up
+        verify(transaction).get(any(), anyList(), any());
+    }
+
+    @Test
+    void get_multiple_returnsEntities_whenAllCached()
+    {
+        final String id1 = "a";
+        final String id2 = "b";
+
+        // Put both in so they get cached
+        subject.put(NAMESPACE1, id1, orange);
+        subject.put(NAMESPACE1, id2, apple);
+
+
+        final List<Fruit> actual = subject.get(NAMESPACE1, List.of(id1, id2), Fruit.class);
+
+        final List<Fruit> expected = List.of(orange, apple);
+
+        Assertions.assertEquals(expected, actual);
+
+        // Should be no look-ups - all should come from the cache
+        verify(transaction, never()).get(any(), anyList(), any());
+    }
+
+    @Test
+    void get_multiple_returnsEntities_whenSomeCached()
+    {
+        final String id1 = "a";
+        final String id2 = "b";
+        final String id3 = "z";
+        final String id4 = "d";
+
+        // Put two of them so they get cached
+        subject.put(NAMESPACE1, id1, apple);
+        subject.put(NAMESPACE1, id3, banana);
+
+        // Expect the other two to be fetched, so mock that fetch
+        when(transaction.get(NAMESPACE1, List.of(id2, id4), Fruit.class))
+            .thenReturn(List.of(orange, melon));
+
+        final List<Fruit> actual = subject.get(NAMESPACE1, List.of(id1, id2, id3, id4), Fruit.class);
+
+        // They must be in the same order they were requested
+        final List<Fruit> expected = List.of(apple, orange, banana, melon);
+
+        Assertions.assertEquals(expected, actual);
+
+        // Should only be one look-up, and only for the ids that weren't in the cache
+        verify(transaction).get(eq(NAMESPACE1), anyList(), eq(Fruit.class));
+    }
+
+    @Test
+    void get_multiple_cachesEntities_whenNotCached()
+    {
+        final String id1 = "a";
+        final String id2 = "b";
+
+        when(transaction.get(NAMESPACE1, List.of(id1, id2), Fruit.class))
+            .thenReturn(List.of(apple, orange));
+
+        // This should fetch and cache the two entities
+        subject.get(NAMESPACE1, List.of(id1, id2), Fruit.class);
+
+        // Remove the mock so it can't fetch them again from storage
+        reset(transaction);
+
+        // Try again, should come from the cache
+        final List<Fruit> actual = subject.get(NAMESPACE1, List.of(id1, id2), Fruit.class);
+
+        final List<Fruit> expected = List.of(apple, orange);
+
+        Assertions.assertEquals(expected, actual);
     }
 
     @ParameterizedTest

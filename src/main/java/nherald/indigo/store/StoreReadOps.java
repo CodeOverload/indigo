@@ -1,5 +1,7 @@
 package nherald.indigo.store;
 
+import java.util.List;
+
 public interface StoreReadOps
 {
     /**
@@ -11,6 +13,18 @@ public interface StoreReadOps
      * @return the entity, or null if the entity doesn't exist
      */
     <T> T get(String namespace, String entityId, Class<T> entityType);
+
+    /**
+     * Fetch multiple entities
+     * @param <T> the entity type
+     * @param namespace namespace
+     * @param ids entity ids
+     * @param entityType entity type
+     * @return the entities. If an entity doesn't exist, a null will
+     * be returned in the returned list at the same position as the
+     * id in the ids list
+     */
+    <T> List<T> get(String namespace, List<String> ids, Class<T> entityType);
 
     /**
      * Determine if an entity exists

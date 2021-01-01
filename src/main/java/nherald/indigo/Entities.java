@@ -39,9 +39,9 @@ public class Entities<T extends Entity>
         return store.get(NAMESPACE, asString(id), entityType);
     }
 
-    public Collection<T> get(Collection<Long> ids)
+    public List<T> get(List<Long> ids)
     {
-        final Collection<String> strIds = ids.stream()
+        final List<String> strIds = ids.stream()
             .map(this::asString)
             .collect(Collectors.toList());
 
