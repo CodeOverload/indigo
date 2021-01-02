@@ -1,7 +1,11 @@
 package nherald.indigo.index;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -64,24 +68,53 @@ public class Index<T extends Entity>
 
     public void add(Collection<String> words, long entityId, Transaction transaction)
     {
-        words.stream()
+        final List<String> filteredWords = words.stream()
             .flatMap(wordFilter::process)
-            .forEach(prefix -> add(prefix, entityId, transaction));
-    }
+            .collect(Collectors.toList());
 
-    private void add(String prefix, long entityId, Transaction transaction)
-    {
-        final IndexSegment segment = getSegmentForWord(prefix, transaction);
+        // Determine which segments we need, and fetch them all in one go
+        final List<String> storeIds = new ArrayList<>(
+            filteredWords.stream()
+                .map(this::getSegmentId)
+                .map(this::getStoreId)
+                .collect(Collectors.toCollection(LinkedHashSet::new))
+        );
 
-        segment.add(prefix, entityId);
+        final List<IndexSegment> segments = transaction.get(NAMESPACE,
+            storeIds, IndexSegment.class);
 
-        final String segmentId = getSegmentId(prefix);
+        final Map<String, IndexSegment> segmentMap = new HashMap<>();
 
-        transaction.put(NAMESPACE, getStoreId(segmentId), segment);
+        for (int i = 0; i < storeIds.size(); ++i)
+        {
+            final String storeId = storeIds.get(i);
+            IndexSegment segment = segments.get(i);
 
-        // Update the contents
+            if (segment == null)
+            {
+                segment = new IndexSegment();
+            }
+
+            segmentMap.put(storeId, segment);
+        }
+
         final Contents contents = getContents(transaction);
-        contents.add(entityId, segmentId);
+
+        filteredWords.forEach(word -> {
+            final String segmentId = getSegmentId(word);
+            final String storeId = getStoreId(segmentId);
+
+            final IndexSegment segment = segmentMap.get(storeId);
+            segment.add(word, entityId);
+
+            contents.add(entityId, segmentId);
+        });
+
+        // Update each of the segments in the store
+        storeIds.forEach(storeId -> {
+            transaction.put(NAMESPACE, storeId, segmentMap.get(storeId));
+        });
+
         saveContents(contents, transaction);
     }
 
@@ -118,14 +151,13 @@ public class Index<T extends Entity>
 
     private String getSegmentId(String word)
     {
-        return word.substring(0, 2);
+        final String segmentId = word.substring(0, 2);
+        return IdValidator.check(segmentId);
     }
 
     private IndexSegment getSegmentForWord(String word, StoreReadOps transaction)
     {
         final String segmentId = getSegmentId(word);
-
-        IdValidator.check(segmentId);
 
         return getSegmentById(segmentId, transaction);
     }
