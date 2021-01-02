@@ -122,10 +122,10 @@ public class Index<T extends Entity>
 
     private IndexSegment getSegmentById(String segmentId, StoreReadOps transaction)
     {
-        final String filename = String.format("%s-%s", getId(), segmentId);
+        final String storeId = getStoreId(segmentId);
 
         // Load from persistent storage if it's saved
-        final IndexSegment loadedSegment = transaction.get(NAMESPACE, filename, IndexSegment.class);
+        final IndexSegment loadedSegment = transaction.get(NAMESPACE, storeId, IndexSegment.class);
 
         if (loadedSegment != null) return loadedSegment;
 
