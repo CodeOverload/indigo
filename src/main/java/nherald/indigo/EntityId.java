@@ -11,6 +11,16 @@ public class EntityId
         this.id = id;
     }
 
+    public String getNamespace()
+    {
+        return namespace;
+    }
+
+    public String getId()
+    {
+        return id;
+    }
+
     @Override
     public int hashCode()
     {

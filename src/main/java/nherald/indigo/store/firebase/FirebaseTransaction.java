@@ -4,9 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -16,6 +14,7 @@ import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
 import nherald.indigo.store.uow.Transaction;
 import nherald.indigo.EntityId;
 import nherald.indigo.store.StoreException;
+import nherald.indigo.store.TooManyWritesException;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
 
@@ -54,7 +53,8 @@ public class FirebaseTransaction implements Transaction
 {
     private static final Logger logger = LoggerFactory.getLogger(FirebaseTransaction.class);
 
-    private static final int BATCH_SIZE = 500;
+    /** The maximum number of write operations permitted by Firestore */
+    private static final int MAX_WRITES = 500;
 
     private final FirebaseRawTransaction transaction;
 
@@ -94,7 +94,8 @@ public class FirebaseTransaction implements Transaction
         }
         catch (InterruptedException | ExecutionException ex)
         {
-            throw new StoreException(String.format("Error getting %s/%s", namespace, String.join(",", ids)), ex);
+            throw new StoreException(String.format("Error getting %s/%s",
+                namespace, String.join(",", ids)), ex);
         }
     }
 
@@ -124,7 +125,7 @@ public class FirebaseTransaction implements Transaction
 
         final EntityId mapKey = getMapKey(namespace, entityId);
 
-        pending.put(mapKey, () -> transaction.set(docId, entity));
+        addToPending(mapKey, () -> transaction.set(docId, entity));
     }
 
     @Override
@@ -134,21 +135,14 @@ public class FirebaseTransaction implements Transaction
 
         final EntityId mapKey = getMapKey(namespace, entityId);
 
-        pending.put(mapKey, () -> transaction.delete(docId));
+        addToPending(mapKey, () -> transaction.delete(docId));
     }
 
     void flush()
     {
-        final AtomicInteger count = new AtomicInteger();
-
-        // TODO We aren't creating transactions ourselves anymore, so can't create a new transaction
-        //      for each batch of 500. Need to implement a solution to handle this
         pending.entrySet()
             .stream()
-            // Split the map into chunks, of no more than BATCH_SIZE updates in each
-            .collect(Collectors.groupingBy(e -> count.getAndIncrement() / BATCH_SIZE))
-            .values()
-            .forEach(this::commitChunk);
+            .forEach(e -> apply(e.getKey(), e.getValue()));
     }
 
     private EntityId getMapKey(String namespace, String entityId)
@@ -162,24 +156,34 @@ public class FirebaseTransaction implements Transaction
 
         if (pending.containsKey(key))
         {
-            final String message = String.format("Object %s/%s has a pending update. " +
-                "Read operations aren't allowed after updates", namespace, entityId);
+            final String message = String.format("Document %s/%s has a "
+                + "pending update. Read operations aren't allowed after "
+                + "updates", namespace, entityId);
 
             throw new StoreException(message);
         }
     }
 
-    private void commitChunk(List<Entry<EntityId, Update>> chunk)
+    private void addToPending(EntityId mapKey, Update update)
     {
-        chunk.stream()
-            .forEach(e -> apply(e.getKey(), e.getValue()));
+        pending.put(mapKey, update);
 
-        logger.info("Committing batch of size {}", chunk.size());
+        throwIfTooManyUpdates();
+    }
+
+    private void throwIfTooManyUpdates()
+    {
+        if (pending.size() <= MAX_WRITES) return;
+
+        final String message = String.format("The number of update operations "
+            + "in this transaction exceeds the maximum of %s", MAX_WRITES);
+
+        throw new TooManyWritesException(message);
     }
 
     private void apply(EntityId key, Update update)
     {
-        logger.info("Adding update to batch: {}", key);
+        logger.info("Applying update {}/{}", key.getNamespace(), key.getId());
 
         update.apply();
     }
