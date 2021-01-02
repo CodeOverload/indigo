@@ -73,47 +73,33 @@ public class Index<T extends Entity>
             .collect(Collectors.toList());
 
         // Determine which segments we need, and fetch them all in one go
-        final List<String> storeIds = new ArrayList<>(
+        final List<String> segmentIds = new ArrayList<>(
             filteredWords.stream()
                 .map(this::getSegmentId)
-                .map(this::getStoreId)
                 .collect(Collectors.toCollection(LinkedHashSet::new))
         );
 
-        final List<IndexSegment> segments = transaction.get(NAMESPACE,
-            storeIds, IndexSegment.class);
-
-        final Map<String, IndexSegment> segmentMap = new HashMap<>();
-
-        for (int i = 0; i < storeIds.size(); ++i)
-        {
-            final String storeId = storeIds.get(i);
-            IndexSegment segment = segments.get(i);
-
-            if (segment == null)
-            {
-                segment = new IndexSegment();
-            }
-
-            segmentMap.put(storeId, segment);
-        }
+        final Map<String, IndexSegment> segmentMap
+            = getSegmentsById(segmentIds, transaction);
 
         final Contents contents = getContents(transaction);
 
+        // Add each word to the corresponding segment, and to the contents
         filteredWords.forEach(word -> {
             final String segmentId = getSegmentId(word);
-            final String storeId = getStoreId(segmentId);
 
-            final IndexSegment segment = segmentMap.get(storeId);
-            segment.add(word, entityId);
+            segmentMap.get(segmentId)
+                .add(word, entityId);
 
             contents.add(entityId, segmentId);
         });
 
         // Update each of the segments in the store
-        storeIds.forEach(storeId -> {
-            transaction.put(NAMESPACE, storeId, segmentMap.get(storeId));
-        });
+        segmentMap.entrySet()
+            .forEach(entry -> {
+                transaction.put(NAMESPACE, getStoreId(entry.getKey()),
+                    entry.getValue());
+            });
 
         saveContents(contents, transaction);
     }
@@ -123,26 +109,21 @@ public class Index<T extends Entity>
         final Contents contents = getContents(transaction);
 
         // Determine which segments this entity is in, using the contents
-        final List<String> storeIds = contents.get(entityId)
-            .stream()
-            .map(this::getStoreId)
-            .collect(Collectors.toList());
+        final List<String> segmentIds = new ArrayList<>(contents.get(entityId));
 
         // Fetch them in one go
-        final List<IndexSegment> segments = transaction.get(NAMESPACE,
-            storeIds, IndexSegment.class);
+        final Map<String, IndexSegment> segments = getSegmentsById(segmentIds,
+            transaction);
 
-        // Remove the entity from each of them
-        for (int i = 0; i < storeIds.size(); ++i)
-        {
-            final String storeId = storeIds.get(i);
-            final IndexSegment segment = segments.get(i);
+        segments.entrySet().forEach(entry -> {
+            final IndexSegment segment = entry.getValue();
 
             segment.remove(entityId);
 
             // Store the updated segment
-            transaction.put(NAMESPACE, storeId, segment);
-        }
+            final String segmentId = entry.getKey();
+            transaction.put(NAMESPACE, getStoreId(segmentId), segment);
+        });
 
         // Update the contents accordingly
         contents.remove(entityId);
@@ -178,6 +159,41 @@ public class Index<T extends Entity>
 
         // Otherwise create a new segment
         return new IndexSegment();
+    }
+
+    /**
+     * Fetches a list of segments from the store
+     * @param segmentIds segment ids
+     * @param transaction store transaction
+     * @return map of segments, keyed by segment id. An empty segment will be
+     * returned for each id that wasn't in the store
+     */
+    private Map<String, IndexSegment> getSegmentsById(List<String> segmentIds,
+        Transaction transaction)
+    {
+        final List<String> storeIds = segmentIds.stream()
+            .map(this::getStoreId)
+            .collect(Collectors.toList());
+
+        final List<IndexSegment> segments = transaction.get(NAMESPACE,
+            storeIds, IndexSegment.class);
+
+        final Map<String, IndexSegment> segmentMap = new HashMap<>();
+
+        for (int i = 0; i < segmentIds.size(); ++i)
+        {
+            final String segmentId = segmentIds.get(i);
+            IndexSegment segment = segments.get(i);
+
+            if (segment == null)
+            {
+                segment = new IndexSegment();
+            }
+
+            segmentMap.put(segmentId, segment);
+        }
+
+        return segmentMap;
     }
 
     private Contents getContents(Transaction transaction)
