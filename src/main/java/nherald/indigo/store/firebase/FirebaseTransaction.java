@@ -22,8 +22,16 @@ import nherald.indigo.store.firebase.db.FirebaseDocumentId;
  * Single-use transaction
  *
  * <p>In a firestore transaction, all read operations (if any) must be run
- * prior to the updates. To adhere to this, update operations (put/delete)
- * will be batched up by this class and applied at the end.
+ * prior to updates. To adhere to this, update operations (put/delete)
+ * will be batched up by this class and applied at the end. Read operations
+ * (get/exists) however will be run immediately. This means that operations
+ * won't always be applied in the same order they were requested. This
+ * would be a problem, e.g. if a delete() was done followed by an exists()
+ * on the same object. Requested order would be; delete(x), exists(x),
+ * whereas the run order would be: exists(x), delete(x). The exists() call
+ * will return true because the delete() wasn't run before it. These
+ * transaction instances must not be used in this way; an exception will be
+ * thrown when trying to do read operation after an update on the same object.
  *
  * <p>Firestore doesn't allow multiple writes to the same object within the
  * same second. To avoid this, if an update is applied to an object more
@@ -65,6 +73,8 @@ public class FirebaseTransaction implements Transaction
     @Override
     public <T> List<T> get(String namespace, List<String> ids, Class<T> entityType)
     {
+        ids.forEach(id -> throwIfPreviouslyUpdated(namespace, id));
+
         final List<FirebaseDocumentId> docIds = ids.stream()
             .map(id -> new FirebaseDocumentId(namespace, id))
             .collect(Collectors.toList());
@@ -90,6 +100,8 @@ public class FirebaseTransaction implements Transaction
     @Override
     public boolean exists(String namespace, String entityId)
     {
+        throwIfPreviouslyUpdated(namespace, entityId);
+
         final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);
 
         try
@@ -145,6 +157,19 @@ public class FirebaseTransaction implements Transaction
             .append("/")
             .append(entityId)
             .toString();
+    }
+
+    private void throwIfPreviouslyUpdated(String namespace, String entityId)
+    {
+        final String key = getMapKey(namespace, entityId);
+
+        if (pending.containsKey(key))
+        {
+            final String message = String.format("Object %s/%s has a pending update. " +
+                "Read operations aren't allowed after updates", namespace, entityId);
+
+            throw new StoreException(message);
+        }
     }
 
     private void commitChunk(List<Entry<String, Update>> chunk)

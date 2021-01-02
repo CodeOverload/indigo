@@ -88,6 +88,32 @@ class FirebaseTransactionTests
     }
 
     @Test
+    void get_afterPut_throwsStoreException()
+        throws InterruptedException, ExecutionException
+    {
+        final String id = "orange";
+
+        subject.put(NAMESPACE, id, orange);
+
+        Assertions.assertThrows(StoreException.class, () -> {
+            subject.get(NAMESPACE, id, Fruit.class);
+        });
+    }
+
+    @Test
+    void get_afterDelete_throwsStoreException()
+        throws InterruptedException, ExecutionException
+    {
+        final String id = "orange";
+
+        subject.delete(NAMESPACE, id);
+
+        Assertions.assertThrows(StoreException.class, () -> {
+            subject.get(NAMESPACE, id, Fruit.class);
+        });
+    }
+
+    @Test
     void get_multiple_returnsNull_whenNotExists()
         throws InterruptedException, ExecutionException
     {
@@ -195,6 +221,32 @@ class FirebaseTransactionTests
 
         Assertions.assertThrows(StoreException.class, () -> {
             subject.exists(NAMESPACE, "orange");
+        });
+    }
+
+    @Test
+    void exists_afterPut_throwsStoreException()
+        throws InterruptedException, ExecutionException
+    {
+        final String id = "orange";
+
+        subject.put(NAMESPACE, id, orange);
+
+        Assertions.assertThrows(StoreException.class, () -> {
+            subject.exists(NAMESPACE, id);
+        });
+    }
+
+    @Test
+    void exists_afterDelete_throwsStoreException()
+        throws InterruptedException, ExecutionException
+    {
+        final String id = "orange";
+
+        subject.delete(NAMESPACE, id);
+
+        Assertions.assertThrows(StoreException.class, () -> {
+            subject.exists(NAMESPACE, id);
         });
     }
 }
