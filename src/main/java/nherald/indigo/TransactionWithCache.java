@@ -24,7 +24,7 @@ public class TransactionWithCache implements Transaction
      * Map of entity id to the entity for that id. A null value indicates that
      * the entity doesn't exist
      */
-    private final Map<CacheKey, Object> cache;
+    private final Map<EntityId, Object> cache;
 
     public TransactionWithCache(Transaction transaction)
     {
@@ -79,7 +79,7 @@ public class TransactionWithCache implements Transaction
     @Override
     public boolean exists(String namespace, String entityId)
     {
-        final CacheKey key = new CacheKey(namespace, entityId);
+        final EntityId key = new EntityId(namespace, entityId);
 
         if (cache.containsKey(key))
         {
@@ -92,7 +92,7 @@ public class TransactionWithCache implements Transaction
     @Override
     public <T> void put(String namespace, String entityId, T entity)
     {
-        final CacheKey key = new CacheKey(namespace, entityId);
+        final EntityId key = new EntityId(namespace, entityId);
 
         cache.put(key, entity);
 
@@ -102,7 +102,7 @@ public class TransactionWithCache implements Transaction
     @Override
     public void delete(String namespace, String entityId)
     {
-        final CacheKey key = new CacheKey(namespace, entityId);
+        final EntityId key = new EntityId(namespace, entityId);
 
         cache.put(key, null);
 
@@ -112,14 +112,14 @@ public class TransactionWithCache implements Transaction
     private class ResultSlot<T>
     {
         private final String entityId;
-        private final CacheKey cacheKey;
+        private final EntityId cacheKey;
         private final boolean isCached;
         private T result;
 
         public ResultSlot(String namespace, String entityId)
         {
             this.entityId = entityId;
-            this.cacheKey = new CacheKey(namespace, entityId);
+            this.cacheKey = new EntityId(namespace, entityId);
 
             this.isCached = cache.containsKey(cacheKey);
 
@@ -149,60 +149,15 @@ public class TransactionWithCache implements Transaction
             this.result = result;
         }
 
-        public CacheKey getCacheKey()
+        public EntityId getCacheKey()
         {
             return cacheKey;
         }
 
         @SuppressWarnings("unchecked")
-        private T getFromCache(CacheKey key)
+        private T getFromCache(EntityId key)
         {
             return (T) cache.get(key);
-        }
-    }
-
-    private static class CacheKey
-    {
-        private final String namespace;
-        private final String entityId;
-
-        public CacheKey(String namespace, String entityId)
-        {
-            this.namespace = namespace;
-            this.entityId = entityId;
-        }
-
-        @Override
-        public int hashCode()
-        {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((entityId == null) ? 0 : entityId.hashCode());
-            result = prime * result + ((namespace == null) ? 0 : namespace.hashCode());
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj)
-        {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            CacheKey other = (CacheKey) obj;
-            if (entityId == null) {
-                if (other.entityId != null)
-                    return false;
-            } else if (!entityId.equals(other.entityId))
-                return false;
-            if (namespace == null) {
-                if (other.namespace != null)
-                    return false;
-            } else if (!namespace.equals(other.namespace))
-                return false;
-            return true;
         }
     }
 }

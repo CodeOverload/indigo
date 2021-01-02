@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
 import nherald.indigo.store.uow.Transaction;
+import nherald.indigo.EntityId;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.firebase.db.FirebaseDocument;
 import nherald.indigo.store.firebase.db.FirebaseDocumentId;
@@ -57,7 +58,7 @@ public class FirebaseTransaction implements Transaction
 
     private final FirebaseRawTransaction transaction;
 
-    private final Map<String, Update> pending = new HashMap<>(203);
+    private final Map<EntityId, Update> pending = new HashMap<>(203);
 
     public FirebaseTransaction(FirebaseRawTransaction transaction)
     {
@@ -121,7 +122,7 @@ public class FirebaseTransaction implements Transaction
     {
         final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);
 
-        final String mapKey = getMapKey(namespace, entityId);
+        final EntityId mapKey = getMapKey(namespace, entityId);
 
         pending.put(mapKey, () -> transaction.set(docId, entity));
     }
@@ -131,7 +132,7 @@ public class FirebaseTransaction implements Transaction
     {
         final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);
 
-        final String mapKey = getMapKey(namespace, entityId);
+        final EntityId mapKey = getMapKey(namespace, entityId);
 
         pending.put(mapKey, () -> transaction.delete(docId));
     }
@@ -150,18 +151,14 @@ public class FirebaseTransaction implements Transaction
             .forEach(this::commitChunk);
     }
 
-    private String getMapKey(String namespace, String entityId)
+    private EntityId getMapKey(String namespace, String entityId)
     {
-        return new StringBuilder(50)
-            .append(namespace)
-            .append("/")
-            .append(entityId)
-            .toString();
+        return new EntityId(namespace, entityId);
     }
 
     private void throwIfPreviouslyUpdated(String namespace, String entityId)
     {
-        final String key = getMapKey(namespace, entityId);
+        final EntityId key = getMapKey(namespace, entityId);
 
         if (pending.containsKey(key))
         {
@@ -172,7 +169,7 @@ public class FirebaseTransaction implements Transaction
         }
     }
 
-    private void commitChunk(List<Entry<String, Update>> chunk)
+    private void commitChunk(List<Entry<EntityId, Update>> chunk)
     {
         chunk.stream()
             .forEach(e -> apply(e.getKey(), e.getValue()));
@@ -180,7 +177,7 @@ public class FirebaseTransaction implements Transaction
         logger.info("Committing batch of size {}", chunk.size());
     }
 
-    private void apply(String key, Update update)
+    private void apply(EntityId key, Update update)
     {
         logger.info("Adding update to batch: {}", key);
 
