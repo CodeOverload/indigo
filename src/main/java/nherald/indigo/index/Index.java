@@ -16,20 +16,36 @@ import nherald.indigo.store.StoreReadOps;
 import nherald.indigo.store.uow.Transaction;
 
 /**
- * Represents an index, which stores key value pairs. Typically words/prefixes/values, which map
- * to document ids
+ * Represents an index, which stores the words and the ids of the entities
+ * that contain those words.
  *
- * This is a cache backed by underlying storage. Note that this will split the index over multiple
- * files (segments) in the storage so that no one file is too big, with each file storing the
- * keys with a particular prefix.
+ * <p>Example:
+ * <ul>
+ * <li>tiger -> 4
+ * <li>panther -> 60, 43
+ * </ul>
  *
- * As segments are often updated many times during a single update (e.g. the word 'tomato'
- * produces the ngrams [tom, toma, tomat, tomato], which all have the same prefix), this caches
- * the segments in memory and updates the in-memory copy each time. Updates can be flushed
- * to storage by committing the transaction
+ * <p>Which denotes that entity 4 contains the word 'tiger', and entities
+ * 60 and 43 contain the word 'panther'
  *
- * As a result of caching, these objects should be as short-lived as possible, otherwise the cache
- * will eventually go out of sync with the storage. Don't use this across different requests
+ * <p>Often an index will also contain ngrams (prefixes) so that the prefixes
+ * can be searched
+ *
+ * <p>Example of the above index, with ngrams:
+ * <ul>
+ * <li>tiger -> 4
+ * <li>tige -> 4
+ * <li>tig -> 4
+ * <li>panther -> 60, 43
+ * <li>panthe -> 60, 43
+ * <li>panth -> 60, 43
+ * <li>pant -> 60, 43
+ * <li>pan -> 60, 43
+ * </ul>
+ *
+ * <p>The index will be split over multiple documents (segments) in the store
+ * so that no one document is too big. A segment is just a subset of the
+ * index, storing the words with a particular prefix
  */
 public class Index<T extends Entity>
 {
@@ -94,7 +110,7 @@ public class Index<T extends Entity>
             contents.add(entityId, segmentId);
         });
 
-        // Update each of the segments in the store
+        // Save each of the updated segments
         segmentMap.entrySet()
             .forEach(entry -> {
                 transaction.put(NAMESPACE, getStoreId(entry.getKey()),
@@ -120,12 +136,12 @@ public class Index<T extends Entity>
 
             segment.remove(entityId);
 
-            // Store the updated segment
+            // Save the updated segment
             final String segmentId = entry.getKey();
             transaction.put(NAMESPACE, getStoreId(segmentId), segment);
         });
 
-        // Update the contents accordingly
+        // Save the contents accordingly
         contents.remove(entityId);
         saveContents(contents, transaction);
     }
