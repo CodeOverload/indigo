@@ -221,8 +221,6 @@ class EntitiesTests
 
         final long id = 65;
 
-        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
-
         final TestEntity entity = new TestEntity();
         entity.setId(id);
         subject.put(entity);
@@ -236,8 +234,6 @@ class EntitiesTests
         mockTransactionStart();
 
         final long id = 65;
-
-        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         final TestEntity entity = new TestEntity();
         entity.setId(id);
@@ -276,8 +272,6 @@ class EntitiesTests
 
         final long id = 65;
 
-        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
-
         final TestEntity entity = new TestEntity();
         entity.setId(id);
         subject.put(entity);
@@ -292,37 +286,7 @@ class EntitiesTests
     }
 
     @Test
-    void put_doesntTryToDeleteOld_forNewEntity()
-    {
-        mockTransactionStart();
-
-        final TestEntity entity = new TestEntity();
-
-        subject.put(entity);
-
-        verify(transaction, never()).delete(anyString(), anyString());
-    }
-
-    @Test
-    void put_deletesOld_forExistingEntity()
-    {
-        final Long id = 45l;
-
-        mockTransactionStart();
-
-        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
-
-        // This is an existing entity as it already has an id
-        final TestEntity entity = new TestEntity();
-        entity.setId(id);
-
-        subject.put(entity);
-
-        verify(transaction).delete(NAMESPACE, id + "");
-    }
-
-    @Test
-    void put_deletesOldFromAllIndices_forExistingEntity()
+    void put_removesOldFromAllIndices_forExistingEntity()
     {
         final Long id = 45l;
 
@@ -343,79 +307,9 @@ class EntitiesTests
     }
 
     @Test
-    void put_deletesOldThenReAddToStore_forExistingEntity()
-    {
-        final Long id = 45l;
-
-        mockTransactionStart();
-
-        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
-
-        // This is an existing entity as it already has an id
-        final TestEntity entity = new TestEntity();
-        entity.setId(id);
-
-        subject.put(entity);
-
-        final InOrder order = inOrder(transaction);
-
-        // Earlier tests just check delete & put are called independently. Check
-        // they're done in the correct order here
-        order.verify(transaction).delete(NAMESPACE, id + "");
-        order.verify(transaction).put(NAMESPACE, id + "", entity);
-    }
-
-    @Test
-    void put_deletesOldThenReAddToIndices_forExistingEntity()
-    {
-        final Long id = 45l;
-
-        mockTransactionStart();
-
-        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
-
-        // This is an existing entity as it already has an id
-        final TestEntity entity = new TestEntity();
-        entity.setId(id);
-
-        subject.put(entity);
-
-        final InOrder order = inOrder(index1);
-
-        final List<String> words1 = List.of("wordA", "wordB");
-
-        // Earlier tests just check delete & put are called independently. Check
-        // they're done in the correct order here. Note; just checking one of the
-        // indices here - no need to check the others
-        order.verify(index1).remove(eq(id), any());
-        order.verify(index1).add(eq(words1), eq(id), any());
-    }
-
-    @Test
-    void put_failsIfEntityIsntInStorage_forExistingEntity()
-    {
-        final Long id = 45l;
-
-        mockTransactionStart();
-
-        // No entity of this id is in the store
-        when(transaction.exists(NAMESPACE, id + "")).thenReturn(false);
-
-        // This is (supposed to be) an existing entity as it already has an id
-        final TestEntity entity = new TestEntity();
-        entity.setId(id);
-
-        Assertions.assertThrows(StoreException.class, () -> {
-            subject.put(entity);
-        });
-    }
-
-    @Test
     void put_multiple_commitsAllChangesInOneBatch()
     {
         mockTransactionStart();
-
-        when(transaction.exists(anyString(), anyString())).thenReturn(true);
 
         // Put two entities at the same time and check they're all committed as part of the same batch.
         // Will involve various deletes and re-adds
@@ -453,9 +347,6 @@ class EntitiesTests
         final long id1 = 65;
         final long id2 = 14;
 
-        when(transaction.exists(NAMESPACE, id1 + "")).thenReturn(true);
-        when(transaction.exists(NAMESPACE, id2 + "")).thenReturn(true);
-
         final TestEntity entity1 = new TestEntity();
         final TestEntity entity2 = new TestEntity();
 
@@ -469,6 +360,83 @@ class EntitiesTests
         // verify the max id doesn't change
         final EntitiesInfo expectedInfo = new EntitiesInfo(CURRENT_MAX_ID);
         verify(transaction).put(NAMESPACE, INFO_ID, expectedInfo);
+    }
+
+    @Test
+    void put_multiple_addsToAllIndices_forExistingEntity()
+    {
+        when(index1.getTarget()).thenReturn(entity -> entity.getId() == 65 ? "wordA wordB" : "wordX");
+        when(index2.getTarget()).thenReturn(entity -> entity.getId() == 65 ? "wordC" : "wordY wordZ");
+        when(index3.getTarget()).thenReturn(entity -> entity.getId() == 65 ? "wordD" : "wordN");
+
+        mockTransactionStart();
+
+        final long id1 = 65;
+        final long id2 = 68;
+
+        final TestEntity entity1 = new TestEntity();
+        entity1.setId(id1);
+
+        final TestEntity entity2 = new TestEntity();
+        entity2.setId(id2);
+
+        subject.put(List.of(entity1, entity2));
+
+        // Entity 1
+        {
+            final List<String> words1 = List.of("wordA", "wordB");
+            final List<String> words2 = List.of("wordC");
+            final List<String> words3 = List.of("wordD");
+
+            verify(index1).add(eq(words1), eq(id1), any());
+            verify(index2).add(eq(words2), eq(id1), any());
+            verify(index3).add(eq(words3), eq(id1), any());
+        }
+
+        // Entity 2
+        {
+            final List<String> words1 = List.of("wordX");
+            final List<String> words2 = List.of("wordY", "wordZ");
+            final List<String> words3 = List.of("wordN");
+
+            verify(index1).add(eq(words1), eq(id2), any());
+            verify(index2).add(eq(words2), eq(id2), any());
+            verify(index3).add(eq(words3), eq(id2), any());
+        }
+    }
+
+    @Test
+    void put_multiple_removesFromAllIndicesFirst_forExistingEntity()
+    {
+        mockTransactionStart();
+
+        final long id1 = 65;
+        final long id2 = 68;
+
+        final TestEntity entity1 = new TestEntity();
+        entity1.setId(id1);
+
+        final TestEntity entity2 = new TestEntity();
+        entity2.setId(id2);
+
+        subject.put(List.of(entity1, entity2));
+
+        final InOrder order = inOrder(index1, index2, index3);
+
+        // Entity 1
+        order.verify(index1).remove(eq(id1), any());
+        order.verify(index2).remove(eq(id1), any());
+        order.verify(index3).remove(eq(id1), any());
+
+        // Entity 2
+        order.verify(index1).remove(eq(id2), any());
+        order.verify(index2).remove(eq(id2), any());
+        order.verify(index3).remove(eq(id2), any());
+
+        // Ensure adds are done after. Don't need to be too specific here
+        order.verify(index1).add(anyList(), anyLong(), any());
+        order.verify(index2).add(anyList(), anyLong(), any());
+        order.verify(index3).add(anyList(), anyLong(), any());
     }
 
     @Test

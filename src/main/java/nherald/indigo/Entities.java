@@ -94,10 +94,9 @@ public class Entities<T extends Entity>
                 // Existing entity
                 else
                 {
-                    // The entity itself doesn't need deleted, but we need to remove
-                    // it from all indices as we don't want them containing stale data
+                    // Remove from all indices as we don't want them containing stale data
                     id = e.getId();
-                    delete(id, transaction);
+                    removeFromIndices(id, transaction);
                 }
 
                 transaction.put(NAMESPACE, asString(id), e);
@@ -122,8 +121,7 @@ public class Entities<T extends Entity>
 
         transaction.delete(NAMESPACE, asString(id));
 
-        indices.stream()
-            .forEach(index -> index.remove(id, transaction));
+        removeFromIndices(id, transaction);
     }
 
     private void runTransaction(Consumer<Transaction> runnable)
@@ -164,5 +162,11 @@ public class Entities<T extends Entity>
         final List<String> words = tokeniser.tokenise(text);
 
         index.add(words, entity.getId(), transaction);
+    }
+
+    private void removeFromIndices(long id, Transaction transaction)
+    {
+        indices.stream()
+            .forEach(index -> index.remove(id, transaction));
     }
 }
