@@ -1,7 +1,9 @@
 package nherald.indigo.index;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import nherald.indigo.Entity;
 import nherald.indigo.index.terms.WordFilter;
@@ -87,16 +89,29 @@ public class Index<T extends Entity>
     {
         final Contents contents = getContents(transaction);
 
-        final Set<String> segmentIds = contents.get(entityId);
+        // Determine which segments this entity is in, using the contents
+        final List<String> storeIds = contents.get(entityId)
+            .stream()
+            .map(this::getStoreId)
+            .collect(Collectors.toList());
 
-        segmentIds.stream()
-            .forEach(segmentId -> {
-                final IndexSegment segment = getSegmentById(segmentId, transaction);
-                segment.remove(entityId);
+        // Fetch them in one go
+        final List<IndexSegment> segments = transaction.get(NAMESPACE,
+            storeIds, IndexSegment.class);
 
-                transaction.put(NAMESPACE, getStoreId(segmentId), segment);
-            });
+        // Remove the entity from each of them
+        for (int i = 0; i < storeIds.size(); ++i)
+        {
+            final String storeId = storeIds.get(i);
+            final IndexSegment segment = segments.get(i);
 
+            segment.remove(entityId);
+
+            // Store the updated segment
+            transaction.put(NAMESPACE, storeId, segment);
+        }
+
+        // Update the contents accordingly
         contents.remove(entityId);
         saveContents(contents, transaction);
     }

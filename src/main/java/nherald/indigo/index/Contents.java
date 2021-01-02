@@ -3,7 +3,7 @@ package nherald.indigo.index;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,7 +81,7 @@ public class Contents
             .stream()
             .collect(Collectors.toMap(
                 e -> Long.parseLong(e.getKey()),
-                e -> new HashSet<>(e.getValue())
+                e -> new LinkedHashSet<>(e.getValue())
             ));
     }
 
@@ -91,7 +91,7 @@ public class Contents
 
         if (segments != null) return segments;
 
-        segments = new HashSet<>(101);
+        segments = new LinkedHashSet<>(101);
 
         map.put(entityId, segments);
 

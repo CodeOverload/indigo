@@ -1,5 +1,6 @@
 package nherald.indigo.index;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -247,14 +248,27 @@ class IndexTests
         when(transaction.get(NAMESPACE, "name-contents", Contents.class))
             .thenReturn(storedContents);
 
-        IndexSegment storedSegment = createSegment("pantha", List.of(4l, 6l, 5l));
-        storedSegment.add("pans", 5);
-        storedSegment.add("pans", 6);
-        storedSegment.add("pairs", 5);
-        when(transaction.get(NAMESPACE, "name-pa", IndexSegment.class)).thenReturn(storedSegment);
+        final List<IndexSegment> storedSegments = new ArrayList<>();
+        // 'pa' segment
+        {
+            final IndexSegment storedSegment = createSegment("pantha", List.of(4l, 6l, 5l));
+            storedSegment.add("pans", 5);
+            storedSegment.add("pans", 6);
+            storedSegment.add("pairs", 5);
 
-        storedSegment = createSegment("tarragon", List.of(5l));
-        when(transaction.get(NAMESPACE, "name-ta", IndexSegment.class)).thenReturn(storedSegment);
+            storedSegments.add(storedSegment);
+        }
+
+        // 'ta' segment
+        {
+            final IndexSegment storedSegment = createSegment("tarragon", List.of(5l));
+
+            storedSegments.add(storedSegment);
+        }
+
+        // All segments should be fetched in one go
+        when(transaction.get(NAMESPACE, List.of("name-pa", "name-ta"), IndexSegment.class))
+            .thenReturn(storedSegments);
 
         // Remove 5
         subject.remove(5, transaction);
@@ -267,14 +281,21 @@ class IndexTests
         verify(transaction).put(NAMESPACE, "name-contents", storedContents);
 
         // And should be removed from only the segments it was in (we want removals/updates
-        // to be efficient, and there could be hundreds of segments)
-        storedSegment = createSegment("pantha", List.of(4l, 6l));
-        storedSegment.add("pans", 6);
-        verify(transaction).put(NAMESPACE, "name-pa", storedSegment);
+        // to be efficient, and there could be hundreds of segments).
 
-        // 5 was the only entry in this segment
-        storedSegment = createSegment("tarragon", List.of());
-        verify(transaction).put(NAMESPACE, "name-ta", storedSegment);
+        // 'pa' segment
+        {
+            final IndexSegment storedSegment = createSegment("pantha", List.of(4l, 6l));
+            storedSegment.add("pans", 6);
+            verify(transaction).put(NAMESPACE, "name-pa", storedSegment);
+        }
+
+        // 'ta' segment
+        {
+            // 5 was the only entry in this segment
+            final IndexSegment storedSegment = createSegment("tarragon", List.of());
+            verify(transaction).put(NAMESPACE, "name-ta", storedSegment);
+        }
 
         // Should be unchanged as 5 wasn't in segment 'ba' originally
         verify(transaction, never()).get(NAMESPACE, "name-ba", IndexSegment.class); // Shouldn't make an attempt to load it
