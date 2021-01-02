@@ -1,5 +1,6 @@
 package nherald.indigo;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,7 @@ public class TransactionWithCache implements Transaction
      * Map of entity id to the entity for that id. A null value indicates that
      * the entity doesn't exist
      */
-    private final Map<MapKey, Object> cache;
+    private final Map<CacheKey, Object> cache;
 
     public TransactionWithCache(Transaction transaction)
     {
@@ -34,18 +35,7 @@ public class TransactionWithCache implements Transaction
     @Override
     public <T> T get(String namespace, String entityId, Class<T> entityType)
     {
-        final MapKey key = new MapKey(namespace, entityId);
-
-        T entity = getFromCache(key);
-
-        if (entity != null) return entity;
-
-        entity = transaction.get(namespace, entityId, entityType);
-
-        // Will add null to the map if the entity didn't exist
-        cache.put(key, entity);
-
-        return entity;
+        return get(namespace, Arrays.asList(entityId), entityType).get(0);
     }
 
     @Override
@@ -89,7 +79,7 @@ public class TransactionWithCache implements Transaction
     @Override
     public boolean exists(String namespace, String entityId)
     {
-        final MapKey key = new MapKey(namespace, entityId);
+        final CacheKey key = new CacheKey(namespace, entityId);
 
         if (cache.containsKey(key))
         {
@@ -102,7 +92,7 @@ public class TransactionWithCache implements Transaction
     @Override
     public <T> void put(String namespace, String entityId, T entity)
     {
-        final MapKey key = new MapKey(namespace, entityId);
+        final CacheKey key = new CacheKey(namespace, entityId);
 
         cache.put(key, entity);
 
@@ -112,30 +102,24 @@ public class TransactionWithCache implements Transaction
     @Override
     public void delete(String namespace, String entityId)
     {
-        final MapKey key = new MapKey(namespace, entityId);
+        final CacheKey key = new CacheKey(namespace, entityId);
 
         cache.put(key, null);
 
         transaction.delete(namespace, entityId);
     }
 
-    @SuppressWarnings("unchecked")
-    private <T> T getFromCache(MapKey key)
-    {
-        return (T) cache.get(key);
-    }
-
     private class ResultSlot<T>
     {
         private final String entityId;
-        private final MapKey cacheKey;
+        private final CacheKey cacheKey;
         private final boolean isCached;
         private T result;
 
         public ResultSlot(String namespace, String entityId)
         {
             this.entityId = entityId;
-            this.cacheKey = new MapKey(namespace, entityId);
+            this.cacheKey = new CacheKey(namespace, entityId);
 
             this.isCached = cache.containsKey(cacheKey);
 
@@ -165,18 +149,24 @@ public class TransactionWithCache implements Transaction
             this.result = result;
         }
 
-        public MapKey getCacheKey()
+        public CacheKey getCacheKey()
         {
             return cacheKey;
         }
+
+        @SuppressWarnings("unchecked")
+        private T getFromCache(CacheKey key)
+        {
+            return (T) cache.get(key);
+        }
     }
 
-    private static class MapKey
+    private static class CacheKey
     {
         private final String namespace;
         private final String entityId;
 
-        public MapKey(String namespace, String entityId)
+        public CacheKey(String namespace, String entityId)
         {
             this.namespace = namespace;
             this.entityId = entityId;
@@ -201,7 +191,7 @@ public class TransactionWithCache implements Transaction
                 return false;
             if (getClass() != obj.getClass())
                 return false;
-            MapKey other = (MapKey) obj;
+            CacheKey other = (CacheKey) obj;
             if (entityId == null) {
                 if (other.entityId != null)
                     return false;

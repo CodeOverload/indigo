@@ -2,6 +2,7 @@ package nherald.indigo;
 
 import static org.mockito.Mockito.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
@@ -39,7 +40,8 @@ class TransactionWithCacheTests
     {
         final String id = "a";
 
-        when(transaction.get(NAMESPACE1, id, Fruit.class)).thenReturn(apple);
+        when(transaction.get(NAMESPACE1, List.of(id), Fruit.class))
+            .thenReturn(List.of(apple));
 
         final Fruit actual = subject.get(NAMESPACE1, id, Fruit.class);
 
@@ -51,7 +53,8 @@ class TransactionWithCacheTests
     {
         final String id = "a";
 
-        when(transaction.get(NAMESPACE1, id, Fruit.class)).thenReturn(apple);
+        when(transaction.get(NAMESPACE1, List.of(id), Fruit.class))
+            .thenReturn(List.of(apple));
 
         // Call multiple times
         subject.get(NAMESPACE1, id, Fruit.class);
@@ -77,6 +80,20 @@ class TransactionWithCacheTests
     }
 
     @Test
+    void get_returnsNull_whenNotExists()
+    {
+        final String id = "a";
+
+        // An entity doesn't exist with this id
+        when(transaction.get(NAMESPACE1, List.of(id), Fruit.class))
+            .thenReturn(Arrays.asList((Fruit) null));
+
+        final Fruit actual = subject.get(NAMESPACE1, id, Fruit.class);
+
+        Assertions.assertNull(actual);
+    }
+
+    @Test
     void get_distinguishesDifferentNamespaces()
     {
         final String id = "a";
@@ -98,14 +115,35 @@ class TransactionWithCacheTests
     {
         final String id = "a";
 
-        when(transaction.get(NAMESPACE1, id, Fruit.class)).thenReturn(apple);
+        when(transaction.get(NAMESPACE1, List.of(id), Fruit.class))
+            .thenReturn(List.of(apple));
 
         // Call multiple times
         subject.get(NAMESPACE1, id, Fruit.class);
         subject.get(NAMESPACE1, id, Fruit.class);
 
         // It should only load from the underlying transaction once
-        verify(transaction).get(NAMESPACE1, id, Fruit.class);
+        verify(transaction).get(NAMESPACE1, List.of(id), Fruit.class);
+    }
+
+    @Test
+    void get_loadsEntityOnce_whenNotExists()
+    {
+        final String id = "a";
+
+        // An entity with this id doesn't exist
+        when(transaction.get(NAMESPACE1, List.of(id), Fruit.class))
+            .thenReturn(Arrays.asList((Fruit) null));
+
+        // Call multiple times
+        subject.get(NAMESPACE1, id, Fruit.class);
+        final Fruit actual = subject.get(NAMESPACE1, id, Fruit.class);
+
+        // It should only load from the underlying transaction once
+        verify(transaction).get(NAMESPACE1, List.of(id), Fruit.class);
+
+        // Also check the return value was correct
+        Assertions.assertNull(actual);
     }
 
     @Test
@@ -176,6 +214,24 @@ class TransactionWithCacheTests
     }
 
     @Test
+    void get_multiple_returnsNull_whenSomeNotExist()
+    {
+        final String id1 = "a";
+        final String id2 = "b";
+        final String id3 = "z";
+        final String id4 = "d";
+
+        when(transaction.get(NAMESPACE1, List.of(id1, id2, id3, id4), Fruit.class))
+            .thenReturn(Arrays.asList(orange, null, null, banana)); // Two don't exist
+
+        final List<Fruit> actual = subject.get(NAMESPACE1, List.of(id1, id2, id3, id4), Fruit.class);
+
+        final List<Fruit> expected = Arrays.asList(orange, null, null, banana);
+
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
     void get_multiple_cachesEntities_whenNotCached()
     {
         final String id1 = "a";
@@ -198,6 +254,30 @@ class TransactionWithCacheTests
         Assertions.assertEquals(expected, actual);
     }
 
+    @Test
+    void get_multiple_cachesEntities_whenNotExist()
+    {
+        final String id1 = "a";
+        final String id2 = "b";
+
+        when(transaction.get(NAMESPACE1, List.of(id1, id2), Fruit.class))
+            .thenReturn(Arrays.asList(apple, null)); // One doesn't exist
+
+        // This should fetch and cache the two entities, even the one that
+        // doesn't exist
+        subject.get(NAMESPACE1, List.of(id1, id2), Fruit.class);
+
+        // Remove the mock so it can't fetch them again from storage
+        reset(transaction);
+
+        // Try again, should come from the cache
+        final List<Fruit> actual = subject.get(NAMESPACE1, List.of(id1, id2), Fruit.class);
+
+        final List<Fruit> expected = Arrays.asList(apple, null);
+
+        Assertions.assertEquals(expected, actual);
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void exists_returnsCorrectValue_whenNotCached(boolean input)
@@ -216,7 +296,8 @@ class TransactionWithCacheTests
     {
         final String id = "a";
 
-        when(transaction.get(NAMESPACE1, id, Fruit.class)).thenReturn(apple);
+        when(transaction.get(NAMESPACE1, List.of(id), Fruit.class))
+            .thenReturn(List.of(apple));
 
         // Get the object; it should be cached after this
         subject.get(NAMESPACE1, id, Fruit.class);
@@ -236,7 +317,8 @@ class TransactionWithCacheTests
         final String id = "a";
 
         // Entity doesn't exist
-        when(transaction.get(NAMESPACE1, id, Fruit.class)).thenReturn(null);
+        when(transaction.get(NAMESPACE1, List.of(id), Fruit.class))
+            .thenReturn(Arrays.asList((Fruit) null));
 
         // Get the object; subject should cache that it doesn't exist
         subject.get(NAMESPACE1, id, Fruit.class);
@@ -318,19 +400,18 @@ class TransactionWithCacheTests
     {
         final String id = "a";
 
-        // Add an object to cache
-        subject.put(NAMESPACE1, id, orange);
+        // Load an object into the cache
+        when(transaction.get(NAMESPACE1, List.of(id), Fruit.class))
+            .thenReturn(List.of(apple));
+        subject.get(NAMESPACE1, id, Fruit.class);
 
-        // Call delete - should remove the cached entry
+        // Call delete - should mark the cached entry as deleted
         subject.delete(NAMESPACE1, id);
 
-        // Mock it up to return a different object, so can be sure it's not using the cache
-        when(transaction.get(NAMESPACE1, id, Fruit.class)).thenReturn(apple);
-
-        // Call get() and check it's the object returned by the mock rather than the original
+        // Call get() and check it returns null
         final Fruit actual = subject.get(NAMESPACE1, id, Fruit.class);
 
-        Assertions.assertEquals(apple, actual);
+        Assertions.assertNull(actual);
     }
 
     @Test
