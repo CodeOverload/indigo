@@ -9,7 +9,7 @@ import java.util.stream.Stream;
  * This applies the following:
  *   1. Remove all non-alpha numeric characters
  *   2. Convert to lower case
- *   3. Filter words that are too short (< 3 characters)
+ *   3. Filter words that are too short (&lt; 3 characters)
  *   4. Filter words that start with a number
  *   5. Filter stop words (this is optional; can be switched on/off via ctor)
  *   6. Split the word into ngrams, 3+ characters long
