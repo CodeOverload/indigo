@@ -1,8 +1,10 @@
 package nherald.indigo.store.firebase.db.wrappers;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
@@ -48,6 +50,17 @@ public class FirestoreWrapper implements FirebaseDatabase
     }
 
     @Override
+    public Collection<FirebaseDocumentId> list(String collectionId)
+    {
+        final Iterable<DocumentReference> collectionRef
+            = database.collection(collectionId).listDocuments();
+
+        return StreamSupport.stream(collectionRef.spliterator(), false)
+            .map(FirestoreWrapper::asId)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public void transaction(Consumer<FirebaseRawTransaction> runnable)
         throws InterruptedException, ExecutionException
     {
@@ -69,5 +82,11 @@ public class FirestoreWrapper implements FirebaseDatabase
     {
         return database.collection(id.getCollection())
             .document(id.getId());
+    }
+
+    private static FirebaseDocumentId asId(DocumentReference docRef)
+    {
+        return new FirebaseDocumentId(docRef.getParent().getId(),
+            docRef.getId());
     }
 }

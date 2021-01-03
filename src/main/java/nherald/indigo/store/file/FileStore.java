@@ -3,8 +3,10 @@ package nherald.indigo.store.file;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -63,6 +65,17 @@ public class FileStore implements Store
         {
             throw new StoreException("Error writing to " + file.getAbsolutePath(), e);
         }
+    }
+
+    @Override
+    public Collection<String> list(String namespace)
+    {
+        final String namespacePrefix = namespace + "-";
+
+        return Stream.of(new File(root).list())
+            .filter(name -> name.startsWith(namespacePrefix) && name.endsWith(".json"))
+            .map(name -> name.substring(namespacePrefix.length(), name.length() - 5))
+            .collect(Collectors.toList());
     }
 
     void delete(String namespace, String id)

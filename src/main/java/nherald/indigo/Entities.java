@@ -48,6 +48,15 @@ public class Entities<T extends Entity>
         return store.get(NAMESPACE, strIds, entityType);
     }
 
+    public Collection<Long> list()
+    {
+        return store.list(NAMESPACE)
+            .stream()
+            .filter(id -> id.matches("[0-9]+"))
+            .map(Long::parseLong)
+            .collect(Collectors.toList());
+    }
+
     public Collection<Long> search(String indexId, String word)
     {
         final Optional<Index<T>> index = indices.stream()

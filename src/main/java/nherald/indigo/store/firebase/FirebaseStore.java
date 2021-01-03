@@ -1,6 +1,7 @@
 package nherald.indigo.store.firebase;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -69,6 +70,15 @@ public class FirebaseStore implements Store
         {
             throw new StoreException(String.format("Error getting %s/%s", namespace, id), ex);
         }
+    }
+
+    @Override
+    public Collection<String> list(String namespace)
+    {
+        return database.list(namespace)
+            .stream()
+            .map(FirebaseDocumentId::getId)
+            .collect(Collectors.toList());
     }
 
     @Override

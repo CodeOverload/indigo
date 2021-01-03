@@ -9,7 +9,7 @@ import nherald.indigo.store.uow.WrapTransaction;
  *
  * Implementations are not intended to be thread safe
  */
-public interface Store extends StoreReadOps
+public interface Store extends StoreReadOps, StoreListOps
 {
     <T extends Transaction> void transaction(Consumer<T> runnable,
         WrapTransaction<T> wrapFunction);

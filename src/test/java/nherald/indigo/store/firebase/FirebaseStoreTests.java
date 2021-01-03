@@ -1,6 +1,8 @@
 package nherald.indigo.store.firebase;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -24,7 +26,7 @@ import nherald.indigo.store.uow.Transaction;
 import nherald.indigo.utils.Fruit;
 
 @ExtendWith(MockitoExtension.class)
-public class FirebaseStoreTests
+class FirebaseStoreTests
 {
     private static final String NAMESPACE = "fruit";
 
@@ -128,6 +130,38 @@ public class FirebaseStoreTests
         final List<Fruit> actual = subject.get(NAMESPACE, List.of("apple", "pear", "orange"), Fruit.class);
 
         final List<Fruit> expected = Arrays.asList(apple, null, orange);
+
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    void list_whenSomeEntitiesExist()
+        throws InterruptedException, ExecutionException
+    {
+        final List<FirebaseDocumentId> ids = createIds("apple", "pear", "orange");
+
+        when(database.list(NAMESPACE))
+            .thenReturn(ids);
+
+        final Collection<String> actual = subject.list(NAMESPACE);
+
+        final Collection<String> expected = List.of("apple", "pear", "orange");
+
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    void list_whenNoEntitiesExist()
+        throws InterruptedException, ExecutionException
+    {
+        final List<FirebaseDocumentId> ids = Collections.emptyList();
+
+        when(database.list(NAMESPACE))
+            .thenReturn(ids);
+
+        final Collection<String> actual = subject.list(NAMESPACE);
+
+        final Collection<String> expected = Collections.emptyList();
 
         Assertions.assertEquals(expected, actual);
     }

@@ -1,5 +1,6 @@
 package nherald.indigo;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
@@ -87,6 +88,30 @@ class EntitiesTests
         final List<String> expectedIds = List.of("25", "12");
 
         verify(store).get(anyString(), eq(expectedIds), eq(TestEntity.class));
+    }
+
+    @Test
+    void list_listsAllIds()
+    {
+        when(store.list(NAMESPACE)).thenReturn(List.of("1", "4"));
+
+        final Collection<Long> actual = subject.list();
+
+        final Collection<Long> expected = List.of(1l, 4l);
+
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    void list_filtersOutInfo()
+    {
+        when(store.list(NAMESPACE)).thenReturn(List.of("45", "info", "31"));
+
+        final Collection<Long> actual = subject.list();
+
+        final Collection<Long> expected = List.of(45l, 31l);
+
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
