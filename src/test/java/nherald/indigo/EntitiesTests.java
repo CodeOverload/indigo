@@ -9,13 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.quality.Strictness;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
 
 import static org.mockito.Mockito.*;
 
-import nherald.indigo.index.Index;
+import nherald.indigo.index.IndicesManager;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.uow.Consumer;
@@ -23,24 +21,15 @@ import nherald.indigo.store.uow.Transaction;
 import nherald.indigo.utils.TestEntity;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 class EntitiesTests
 {
     private static final String NAMESPACE = "entities";
     private static final String INFO_ID = "info";
 
-    private static final String WORD1 = "something";
-
     private static final long CURRENT_MAX_ID = 76;
 
     @Mock
-    private Index<TestEntity> index1;
-
-    @Mock
-    private Index<TestEntity> index2;
-
-    @Mock
-    private Index<TestEntity> index3;
+    private IndicesManager<TestEntity> indicesManager;
 
     @Mock
     private Store store;
@@ -53,21 +42,7 @@ class EntitiesTests
     @BeforeEach
     void before()
     {
-        when(index1.getTarget()).thenReturn(entity -> "wordA wordB");
-        when(index2.getTarget()).thenReturn(entity -> "wordC");
-        when(index3.getTarget()).thenReturn(entity -> "wordD");
-
-        when(index1.getId()).thenReturn("index1");
-        when(index2.getId()).thenReturn("index2");
-        when(index3.getId()).thenReturn("index3");
-
-        final List<Index<TestEntity>> indices
-            = List.of(index1, index2, index3);
-
-        final EntitiesInfo info = new EntitiesInfo(CURRENT_MAX_ID);
-        when(transaction.get(NAMESPACE, INFO_ID, EntitiesInfo.class)).thenReturn(info);
-
-        subject = new Entities<>(TestEntity.class, indices, store);
+        subject = new Entities<>(TestEntity.class, indicesManager, store);
     }
 
     @Test
@@ -115,27 +90,10 @@ class EntitiesTests
     }
 
     @Test
-    void search_searchesCorrectIndex()
-    {
-        subject.search("index2", WORD1);
-
-        verify(index2).get(WORD1);
-
-        verify(index1, never()).get(anyString());
-        verify(index3, never()).get(anyString());
-    }
-
-    @Test
-    void search_exceptionWhenUnknownIndexSpecified()
-    {
-        Assertions.assertThrows(StoreException.class, () -> {
-            subject.search("index_id_that_doesnt_exist", WORD1);
-        });
-    }
-
-    @Test
     void put_generatesNewId_forNewEntity()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         final TestEntity entity = new TestEntity();
@@ -148,6 +106,8 @@ class EntitiesTests
     @Test
     void put_generatesNewId_forNewEntities()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         // Add two entities, the second should get it's own id
@@ -162,16 +122,9 @@ class EntitiesTests
     @Test
     void put_generatesNewId_forNewEntity_storeCompletelyEmpty()
     {
-        // Create a completely empty Transaction instance (crucially, this doesn't have an info object
-        // stored to denote which is the next id)
-        transaction = mock(TransactionWithCache.class);
+        // Deliberately don't mock an EntitiesInfo object in the store
 
         mockTransactionStart();
-
-        final List<Index<TestEntity>> indices
-            = List.of(index1, index2, index3);
-
-        subject = new Entities<>(TestEntity.class, indices, store);
 
         final TestEntity entity = new TestEntity();
 
@@ -184,11 +137,11 @@ class EntitiesTests
     @Test
     void put_usesEntityId_forExistingEntity()
     {
+        mockStoredInfo();
+
         final Long id = 45l;
 
         mockTransactionStart();
-
-        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         // This is an existing entity as it already has an id
         final TestEntity entity = new TestEntity();
@@ -203,6 +156,8 @@ class EntitiesTests
     @Test
     void put_addsToStore_forNewEntity()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         final TestEntity entity = new TestEntity();
@@ -214,6 +169,8 @@ class EntitiesTests
     @Test
     void put_updatesMaxId_forNewEntity()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         final TestEntity entity = new TestEntity();
@@ -227,6 +184,8 @@ class EntitiesTests
     @Test
     void put_addsToStore_forNewEntities()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         final TestEntity entity1 = new TestEntity();
@@ -242,6 +201,8 @@ class EntitiesTests
     @Test
     void put_addsToStore_forExistingEntity()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         final long id = 65;
@@ -256,6 +217,8 @@ class EntitiesTests
     @Test
     void put_doesntIncreaseMaxId_forExistingEntity()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         final long id = 65;
@@ -274,50 +237,41 @@ class EntitiesTests
     @Test
     void put_addsToAllIndices_forNewEntity()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         final TestEntity entity = new TestEntity();
         subject.put(entity);
 
-        final Long id = entity.getId();
-
-        final List<String> words1 = List.of("wordA", "wordB");
-        final List<String> words2 = List.of("wordC");
-        final List<String> words3 = List.of("wordD");
-
-        verify(index1).add(eq(words1), eq(id), any());
-        verify(index2).add(eq(words2), eq(id), any());
-        verify(index3).add(eq(words3), eq(id), any());
+        verify(indicesManager).addEntity(eq(entity), any());
     }
 
     @Test
     void put_addsToAllIndices_forExistingEntity()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         final long id = 65;
 
         final TestEntity entity = new TestEntity();
         entity.setId(id);
+
         subject.put(entity);
 
-        final List<String> words1 = List.of("wordA", "wordB");
-        final List<String> words2 = List.of("wordC");
-        final List<String> words3 = List.of("wordD");
-
-        verify(index1).add(eq(words1), eq(id), any());
-        verify(index2).add(eq(words2), eq(id), any());
-        verify(index3).add(eq(words3), eq(id), any());
+        verify(indicesManager).addEntity(eq(entity), any());
     }
 
     @Test
     void put_removesOldFromAllIndices_forExistingEntity()
     {
+        mockStoredInfo();
+
         final Long id = 45l;
 
         mockTransactionStart();
-
-        when(transaction.exists(NAMESPACE, id + "")).thenReturn(true);
 
         // This is an existing entity as it already has an id
         final TestEntity entity = new TestEntity();
@@ -326,14 +280,14 @@ class EntitiesTests
         subject.put(entity);
 
         // Old entries should be removed
-        verify(index1).remove(eq(id), any());
-        verify(index2).remove(eq(id), any());
-        verify(index3).remove(eq(id), any());
+        verify(indicesManager).removeEntity(eq(id), any());
     }
 
     @Test
     void put_multiple_commitsAllChangesInOneBatch()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         // Put two entities at the same time and check they're all committed as part of the same batch.
@@ -353,6 +307,8 @@ class EntitiesTests
     @Test
     void put_multiple_updatesMaxId_forNewEntities()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         final TestEntity entity1 = new TestEntity();
@@ -367,6 +323,8 @@ class EntitiesTests
     @Test
     void put_multiple_doesntIncreaseMaxId_forExistingEntities()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         final long id1 = 65;
@@ -390,9 +348,7 @@ class EntitiesTests
     @Test
     void put_multiple_addsToAllIndices_forExistingEntity()
     {
-        when(index1.getTarget()).thenReturn(entity -> entity.getId() == 65 ? "wordA wordB" : "wordX");
-        when(index2.getTarget()).thenReturn(entity -> entity.getId() == 65 ? "wordC" : "wordY wordZ");
-        when(index3.getTarget()).thenReturn(entity -> entity.getId() == 65 ? "wordD" : "wordN");
+        mockStoredInfo();
 
         mockTransactionStart();
 
@@ -407,32 +363,15 @@ class EntitiesTests
 
         subject.put(List.of(entity1, entity2));
 
-        // Entity 1
-        {
-            final List<String> words1 = List.of("wordA", "wordB");
-            final List<String> words2 = List.of("wordC");
-            final List<String> words3 = List.of("wordD");
-
-            verify(index1).add(eq(words1), eq(id1), any());
-            verify(index2).add(eq(words2), eq(id1), any());
-            verify(index3).add(eq(words3), eq(id1), any());
-        }
-
-        // Entity 2
-        {
-            final List<String> words1 = List.of("wordX");
-            final List<String> words2 = List.of("wordY", "wordZ");
-            final List<String> words3 = List.of("wordN");
-
-            verify(index1).add(eq(words1), eq(id2), any());
-            verify(index2).add(eq(words2), eq(id2), any());
-            verify(index3).add(eq(words3), eq(id2), any());
-        }
+        verify(indicesManager).addEntity(eq(entity1), any());
+        verify(indicesManager).addEntity(eq(entity2), any());
     }
 
     @Test
     void put_multiple_removesFromAllIndicesFirst_forExistingEntity()
     {
+        mockStoredInfo();
+
         mockTransactionStart();
 
         final long id1 = 65;
@@ -446,22 +385,14 @@ class EntitiesTests
 
         subject.put(List.of(entity1, entity2));
 
-        final InOrder order = inOrder(index1, index2, index3);
+        final InOrder order = inOrder(indicesManager);
 
-        // Entity 1
-        order.verify(index1).remove(eq(id1), any());
-        order.verify(index2).remove(eq(id1), any());
-        order.verify(index3).remove(eq(id1), any());
+        // Ensure adds are done after
+        order.verify(indicesManager).removeEntity(eq(id1), any());
+        order.verify(indicesManager).addEntity(eq(entity1), any());
 
-        // Entity 2
-        order.verify(index1).remove(eq(id2), any());
-        order.verify(index2).remove(eq(id2), any());
-        order.verify(index3).remove(eq(id2), any());
-
-        // Ensure adds are done after. Don't need to be too specific here
-        order.verify(index1).add(anyList(), anyLong(), any());
-        order.verify(index2).add(anyList(), anyLong(), any());
-        order.verify(index3).add(anyList(), anyLong(), any());
+        order.verify(indicesManager).removeEntity(eq(id2), any());
+        order.verify(indicesManager).addEntity(eq(entity2), any());
     }
 
     @Test
@@ -494,7 +425,7 @@ class EntitiesTests
     }
 
     @Test
-    void delete_removesFromAllIndices()
+    void delete_removesFromIndices()
     {
         final Long id = 45l;
 
@@ -504,9 +435,7 @@ class EntitiesTests
 
         subject.delete(id);
 
-        verify(index1).remove(eq(id), any());
-        verify(index2).remove(eq(id), any());
-        verify(index3).remove(eq(id), any());
+        verify(indicesManager).removeEntity(eq(id), any());
     }
 
     @Test
@@ -522,6 +451,17 @@ class EntitiesTests
 
         // Only one transaction requested
         verify(store).transaction(any(), any());
+    }
+
+    /**
+     * Mocks up the store such that there's an EntitiesInfo object stored with
+     * CURRENT_MAX_ID as the current maxId
+     */
+    private void mockStoredInfo()
+    {
+        final EntitiesInfo info = new EntitiesInfo(CURRENT_MAX_ID);
+        when(transaction.get(NAMESPACE, INFO_ID, EntitiesInfo.class))
+            .thenReturn(info);
     }
 
     @SuppressWarnings("unchecked")

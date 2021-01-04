@@ -3,11 +3,9 @@ package nherald.indigo;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-import nherald.indigo.index.Index;
-import nherald.indigo.index.terms.BasicTokeniser;
+import nherald.indigo.index.IndicesManager;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.uow.Consumer;
@@ -21,17 +19,16 @@ public class Entities<T extends Entity>
 
     private final Class<T> entityType;
 
-    private final Collection<Index<T>> indices;
+    private final IndicesManager<T> indices;
 
     private final Store store;
 
-    public Entities(Class<T> entityType, Collection<Index<T>> indices,
+    public Entities(Class<T> entityType, IndicesManager<T> indices,
         Store store)
     {
         this.entityType = entityType;
-        this.store = store;
-
         this.indices = indices;
+        this.store = store;
     }
 
     public T get(long id)
@@ -59,16 +56,7 @@ public class Entities<T extends Entity>
 
     public Collection<Long> search(String indexId, String word)
     {
-        final Optional<Index<T>> index = indices.stream()
-            .filter(i -> i.getId().equals(indexId))
-            .findFirst();
-
-        if (!index.isPresent())
-        {
-            throw new StoreException(String.format("Index %s doesn't exist", indexId));
-        }
-
-        return index.get().get(word);
+        return indices.search(indexId, word);
     }
 
     /**
@@ -92,25 +80,26 @@ public class Entities<T extends Entity>
         final EntitiesInfo info = loadInfo(transaction);
 
         entities.stream()
-            .forEach(e -> {
+            .forEach(entity -> {
                 final long id;
+
                 // This is a new entity
-                if (e.getId() == null)
+                if (entity.getId() == null)
                 {
                     id = info.generateId();
-                    e.setId(id);
+                    entity.setId(id);
                 }
                 // Existing entity
                 else
                 {
                     // Remove from all indices as we don't want them containing stale data
-                    id = e.getId();
-                    removeFromIndices(id, transaction);
+                    id = entity.getId();
+                    indices.removeEntity(id, transaction);
                 }
 
-                transaction.put(NAMESPACE, asString(id), e);
+                transaction.put(NAMESPACE, asString(id), entity);
 
-                addToIndices(e, transaction);
+                indices.addEntity(entity, transaction);
             });
 
         transaction.put(NAMESPACE, INFO_ID, info);
@@ -130,7 +119,7 @@ public class Entities<T extends Entity>
 
         transaction.delete(NAMESPACE, asString(id));
 
-        removeFromIndices(id, transaction);
+        indices.removeEntity(id, transaction);
     }
 
     private void runTransaction(Consumer<Transaction> runnable)
@@ -154,28 +143,5 @@ public class Entities<T extends Entity>
         if (storedInfo != null) return storedInfo;
 
         return new EntitiesInfo();
-    }
-
-    private void addToIndices(T entity, Transaction transaction)
-    {
-        indices.stream()
-            .forEach(index -> addToIndex(entity, index, transaction));
-    }
-
-    private void addToIndex(T entity, Index<T> index, Transaction transaction)
-    {
-        final BasicTokeniser tokeniser = new BasicTokeniser();
-
-        final String text = index.getTarget().getTextFromEntity(entity);
-
-        final List<String> words = tokeniser.tokenise(text);
-
-        index.add(words, entity.getId(), transaction);
-    }
-
-    private void removeFromIndices(long id, Transaction transaction)
-    {
-        indices.stream()
-            .forEach(index -> index.remove(id, transaction));
     }
 }
