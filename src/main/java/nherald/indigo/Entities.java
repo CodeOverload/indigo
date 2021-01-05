@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import nherald.indigo.helpers.IdHelpers;
 import nherald.indigo.index.IndicesManager;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
@@ -33,13 +34,13 @@ public class Entities<T extends Entity>
 
     public T get(long id)
     {
-        return store.get(NAMESPACE, asString(id), entityType);
+        return store.get(NAMESPACE, IdHelpers.asString(id), entityType);
     }
 
     public List<T> get(List<Long> ids)
     {
         final List<String> strIds = ids.stream()
-            .map(this::asString)
+            .map(IdHelpers::asString)
             .collect(Collectors.toList());
 
         return store.get(NAMESPACE, strIds, entityType);
@@ -75,6 +76,15 @@ public class Entities<T extends Entity>
         runTransaction(transaction -> put(entities, transaction));
     }
 
+    void runTransaction(Consumer<Transaction> runnable)
+    {
+        // Wrap the store transaction with a cachable wrapper. Note that
+        // the store may re-run transactions (e.g. if there were conflicting
+        // updates from another process), so need to start with a new cache
+        // each time; each transaction must not update application state
+        store.transaction(runnable, TransactionWithCache::new);
+    }
+
     private void put(Collection<T> entities, Transaction transaction)
     {
         final EntitiesInfo info = loadInfo(transaction);
@@ -97,7 +107,7 @@ public class Entities<T extends Entity>
                     indices.removeEntity(id, transaction);
                 }
 
-                transaction.put(NAMESPACE, asString(id), entity);
+                transaction.put(NAMESPACE, IdHelpers.asString(id), entity);
 
                 indices.addEntity(entity, transaction);
             });
@@ -112,28 +122,16 @@ public class Entities<T extends Entity>
 
     private void delete(long id, Transaction transaction)
     {
-        if (!transaction.exists(NAMESPACE, asString(id)))
+        final String stringId = IdHelpers.asString(id);
+
+        if (!transaction.exists(NAMESPACE, stringId))
         {
             throw new StoreException(String.format("Entity %s doesn't exist", id));
         }
 
-        transaction.delete(NAMESPACE, asString(id));
+        transaction.delete(NAMESPACE, stringId);
 
         indices.removeEntity(id, transaction);
-    }
-
-    private void runTransaction(Consumer<Transaction> runnable)
-    {
-        // Wrap the store transaction with a cachable wrapper. Note that
-        // the store may re-run transactions (e.g. if there were conflicting
-        // updates from another process), so need to start with a new cache
-        // each time; each transaction must not update application state
-        store.transaction(runnable, TransactionWithCache::new);
-    }
-
-    private String asString(long id)
-    {
-        return id + "";
     }
 
     private EntitiesInfo loadInfo(Transaction transaction)

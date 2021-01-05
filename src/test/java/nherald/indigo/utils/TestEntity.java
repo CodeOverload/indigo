@@ -6,6 +6,15 @@ public class TestEntity implements Entity
 {
     private Long id;
 
+    public TestEntity()
+    {
+    }
+
+    public TestEntity(long id)
+    {
+        this.id = id;
+    }
+
     @Override
     public Long getId()
     {
@@ -43,5 +52,13 @@ public class TestEntity implements Entity
         } else if (!id.equals(other.id))
             return false;
         return true;
+    }
+
+    @Override
+    public String toString()
+    {
+        StringBuilder builder = new StringBuilder();
+        builder.append("TestEntity [id=").append(id).append("]");
+        return builder.toString();
     }
 }
