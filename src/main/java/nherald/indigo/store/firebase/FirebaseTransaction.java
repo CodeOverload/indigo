@@ -1,11 +1,8 @@
 package nherald.indigo.store.firebase;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +12,6 @@ import nherald.indigo.store.uow.Transaction;
 import nherald.indigo.EntityId;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.TooManyWritesException;
-import nherald.indigo.store.firebase.db.FirebaseRawDocument;
 import nherald.indigo.store.firebase.db.FirebaseRawDocumentId;
 
 /**
@@ -49,7 +45,7 @@ import nherald.indigo.store.firebase.db.FirebaseRawDocumentId;
  * <p>There's no guarantee that objects (relative to each other) will be
  * updated in the database in the order the updates were applied
  */
-public class FirebaseTransaction implements Transaction
+public class FirebaseTransaction extends FirebaseReadOps implements Transaction
 {
     private static final Logger logger = LoggerFactory.getLogger(FirebaseTransaction.class);
 
@@ -62,60 +58,33 @@ public class FirebaseTransaction implements Transaction
 
     public FirebaseTransaction(FirebaseRawTransaction transaction)
     {
+        super(transaction);
+
         this.transaction = transaction;
     }
 
     @Override
-    public <T> T get(String namespace, String id, Class<T> entityType)
+    public <T> T get(String namespace, String id, Class<T> itemType)
     {
-        return get(namespace, Arrays.asList(id), entityType).get(0);
+        throwIfPreviouslyUpdated(namespace, id);
+
+        return super.get(namespace, id, itemType);
     }
 
     @Override
-    public <T> List<T> get(String namespace, List<String> ids, Class<T> entityType)
+    public <T> List<T> get(String namespace, List<String> ids, Class<T> itemType)
     {
         ids.forEach(id -> throwIfPreviouslyUpdated(namespace, id));
 
-        final List<FirebaseRawDocumentId> docIds = ids.stream()
-            .map(id -> new FirebaseRawDocumentId(namespace, id))
-            .collect(Collectors.toList());
-
-        try
-        {
-            final List<FirebaseRawDocument> docs = transaction.getAll(docIds);
-
-            return docs.stream()
-                .map(doc -> {
-                    if (!doc.exists()) return null;
-
-                    return doc.asObject(entityType);
-                })
-                .collect(Collectors.toList());
-        }
-        catch (InterruptedException | ExecutionException ex)
-        {
-            throw new StoreException(String.format("Error getting %s/%s",
-                namespace, String.join(",", ids)), ex);
-        }
+        return super.get(namespace, ids, itemType);
     }
 
     @Override
-    public boolean exists(String namespace, String entityId)
+    public boolean exists(String namespace, String id)
     {
-        throwIfPreviouslyUpdated(namespace, entityId);
+        throwIfPreviouslyUpdated(namespace, id);
 
-        final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(namespace, entityId);
-
-        try
-        {
-            final FirebaseRawDocument doc = transaction.get(docId);
-
-            return doc.exists();
-        }
-        catch (InterruptedException | ExecutionException ex)
-        {
-            throw new StoreException(String.format("Error getting %s/%s", namespace, entityId), ex);
-        }
+        return super.exists(namespace, id);
     }
 
     @Override
