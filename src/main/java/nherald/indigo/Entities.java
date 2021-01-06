@@ -39,11 +39,7 @@ public class Entities<T extends Entity>
 
     public List<T> get(List<Long> ids)
     {
-        final List<String> strIds = ids.stream()
-            .map(IdHelpers::asString)
-            .collect(Collectors.toList());
-
-        return store.get(NAMESPACE, strIds, entityType);
+        return store.get(NAMESPACE, IdHelpers.asStrings(ids), entityType);
     }
 
     public Collection<Long> list()
