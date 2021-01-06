@@ -12,7 +12,7 @@ import nherald.indigo.store.StoreException;
 import nherald.indigo.store.uow.Consumer;
 import nherald.indigo.store.uow.Transaction;
 
-public class Entities<T extends Entity>
+public class Indigo<T extends Entity>
 {
     private static final String INFO_ID = "info";
 
@@ -24,7 +24,7 @@ public class Entities<T extends Entity>
 
     private final Store store;
 
-    public Entities(Class<T> entityType, IndicesManager<T> indices,
+    public Indigo(Class<T> entityType, IndicesManager<T> indices,
         Store store)
     {
         this.entityType = entityType;

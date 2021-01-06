@@ -21,7 +21,7 @@ import nherald.indigo.store.uow.Transaction;
 import nherald.indigo.utils.TestEntity;
 
 @ExtendWith(MockitoExtension.class)
-class EntitiesTests
+class IndigoTests
 {
     private static final String NAMESPACE = "entities";
     private static final String INFO_ID = "info";
@@ -37,12 +37,12 @@ class EntitiesTests
     @Mock
     private TransactionWithCache transaction;
 
-    private Entities<TestEntity> subject;
+    private Indigo<TestEntity> subject;
 
     @BeforeEach
     void before()
     {
-        subject = new Entities<>(TestEntity.class, indicesManager, store);
+        subject = new Indigo<>(TestEntity.class, indicesManager, store);
     }
 
     @Test

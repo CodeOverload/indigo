@@ -13,12 +13,12 @@ import nherald.indigo.index.IndicesManager;
  * meaning the whole operation is run as a batch of separate transactions
  * and therefore not a single atomic operation
  */
-public class EntitiesAdmin<T extends Entity>
+public class IndigoAdmin<T extends Entity>
 {
-    private final Entities<T> entities;
+    private final Indigo<T> entities;
     private final IndicesManager<T> indices;
 
-    public EntitiesAdmin(Entities<T> entities, IndicesManager<T> indices)
+    public IndigoAdmin(Indigo<T> entities, IndicesManager<T> indices)
     {
         this.entities = entities;
         this.indices = indices;

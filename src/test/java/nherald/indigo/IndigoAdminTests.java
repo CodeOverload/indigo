@@ -17,10 +17,10 @@ import nherald.indigo.store.uow.Transaction;
 import nherald.indigo.utils.TestEntity;
 
 @ExtendWith(MockitoExtension.class)
-class EntitiesAdminTests
+class IndigoAdminTests
 {
     @Mock
-    private Entities<TestEntity> entities;
+    private Indigo<TestEntity> entities;
 
     @Mock
     private IndicesManager<TestEntity> indicesManager;
@@ -29,7 +29,7 @@ class EntitiesAdminTests
     private Transaction transaction;
 
     @InjectMocks
-    private EntitiesAdmin<TestEntity> subject;
+    private IndigoAdmin<TestEntity> subject;
 
     @Test
     void regenIndices_processesAllEntities_whenNumberOfEntitiesLessThanBatchSize()
