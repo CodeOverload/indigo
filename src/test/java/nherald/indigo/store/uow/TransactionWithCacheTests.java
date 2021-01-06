@@ -1,4 +1,4 @@
-package nherald.indigo;
+package nherald.indigo.store.uow;
 
 import static org.mockito.Mockito.*;
 
@@ -15,7 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import nherald.indigo.store.uow.Transaction;
 import nherald.indigo.utils.Fruit;
 
 @ExtendWith(MockitoExtension.class)

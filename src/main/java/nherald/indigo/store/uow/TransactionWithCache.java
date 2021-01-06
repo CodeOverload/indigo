@@ -1,4 +1,4 @@
-package nherald.indigo;
+package nherald.indigo.store.uow;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import nherald.indigo.store.uow.Transaction;
+import nherald.indigo.EntityId;
 
 /**
  * Transaction wrapper that caches operations. This allows us to maintain state

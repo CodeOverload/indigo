@@ -11,6 +11,7 @@ import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.uow.Consumer;
 import nherald.indigo.store.uow.Transaction;
+import nherald.indigo.store.uow.TransactionWithCache;
 
 public class Indigo<T extends Entity>
 {
