@@ -5,7 +5,7 @@ import nherald.indigo.store.uow.Transaction;
 import nherald.indigo.store.uow.WrapTransaction;
 
 /**
- * Stores entities (documents/objects/etc) to persistent storage.
+ * Stores items to persistent storage.
  *
  * Implementations are not intended to be thread safe
  */

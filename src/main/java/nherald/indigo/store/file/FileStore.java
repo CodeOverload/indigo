@@ -52,14 +52,14 @@ public class FileStore implements Store
         return getFile(namespace, id).exists();
     }
 
-    <T> void put(String namespace, String id, final T entity)
+    <T> void put(String namespace, String id, final T item)
     {
         IdHelpers.validate(id);
 
         final File file = getFile(namespace, id);
         try
         {
-            mapper.writeValue(file, entity);
+            mapper.writeValue(file, item);
         }
         catch (IOException e)
         {

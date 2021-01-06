@@ -5,32 +5,32 @@ import java.util.List;
 public interface StoreReadOps
 {
     /**
-     * Fetch a single entity
-     * @param <T> the entity type to deserialise
+     * Fetch a single item
+     * @param <T> the item type to deserialise
      * @param namespace namespace
-     * @param id entity id
-     * @param entityType entity type
-     * @return the entity, or null if the entity doesn't exist
+     * @param id item id
+     * @param type item type
+     * @return the item, or null if the item doesn't exist
      */
-    <T> T get(String namespace, String id, Class<T> entityType);
+    <T> T get(String namespace, String id, Class<T> type);
 
     /**
-     * Fetch multiple entities
-     * @param <T> the entity type
+     * Fetch multiple items
+     * @param <T> the item type
      * @param namespace namespace
-     * @param ids entity ids
-     * @param entityType entity type
-     * @return the entities. If an entity doesn't exist, a null will
+     * @param ids item ids
+     * @param type item type
+     * @return the items. If an item doesn't exist, a null will
      * be returned in the returned list at the same position as the
      * id in the ids list
      */
-    <T> List<T> get(String namespace, List<String> ids, Class<T> entityType);
+    <T> List<T> get(String namespace, List<String> ids, Class<T> type);
 
     /**
-     * Determine if an entity exists
+     * Determine if an item exists
      * @param namespace namespace
-     * @param id entity id
-     * @return true if the entity with this id is stored, false otherwise
+     * @param id item id
+     * @return true if the item with this id is stored, false otherwise
      */
     boolean exists(String namespace, String id);
 }

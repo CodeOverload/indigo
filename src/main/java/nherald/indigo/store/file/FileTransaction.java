@@ -23,14 +23,14 @@ public class FileTransaction implements Transaction
         this.store = store;
     }
 
-    public <T> T get(String namespace, String id, Class<T> entityType)
+    public <T> T get(String namespace, String id, Class<T> type)
     {
-        return store.get(namespace, id, entityType);
+        return store.get(namespace, id, type);
     }
 
-    public <T> List<T> get(String namespace, List<String> id, Class<T> entityType)
+    public <T> List<T> get(String namespace, List<String> id, Class<T> type)
     {
-        return store.get(namespace, id, entityType);
+        return store.get(namespace, id, type);
     }
 
     @Override
@@ -40,29 +40,29 @@ public class FileTransaction implements Transaction
     }
 
     @Override
-    public <T> void put(String namespace, String id, T entity)
+    public <T> void put(String namespace, String id, T item)
     {
-        pending.put(getMapKey(namespace, id), () -> {
-            store.put(namespace, id, entity);
-        });
+        pending.put(getMapKey(namespace, id), () ->
+            store.put(namespace, id, item)
+        );
     }
 
     @Override
     public void delete(String namespace, String id)
     {
-        pending.put(getMapKey(namespace, id), () -> {
-            store.delete(namespace, id);
-        });
+        pending.put(getMapKey(namespace, id), () ->
+            store.delete(namespace, id)
+        );
     }
 
     /**
      * Adds an update to the transaction, to update in one go when finished. Notes:
      *
-     * - If an entity is added more than once, only the last version added
+     * - If an item is added more than once, only the last version added
      *   will be saved
      *
      * - Updates may be run in any order, regardless of the order they were added.
-     *   All entities are stored independently on the filesystem, with no hard
+     *   All items are stored independently on the filesystem, with no hard
      *   dependencies between each other, so it shouldn't matter which order
      *   they're saved in
      */

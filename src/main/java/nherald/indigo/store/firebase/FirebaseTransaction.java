@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
 import nherald.indigo.store.uow.Transaction;
-import nherald.indigo.EntityId;
+import nherald.indigo.store.ItemId;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.TooManyWritesException;
 import nherald.indigo.store.firebase.db.FirebaseRawDocumentId;
@@ -54,7 +54,7 @@ public class FirebaseTransaction extends FirebaseReadOps implements Transaction
 
     private final FirebaseRawTransaction transaction;
 
-    private final Map<EntityId, Update> pending = new HashMap<>(203);
+    private final Map<ItemId, Update> pending = new HashMap<>(203);
 
     public FirebaseTransaction(FirebaseRawTransaction transaction)
     {
@@ -88,13 +88,13 @@ public class FirebaseTransaction extends FirebaseReadOps implements Transaction
     }
 
     @Override
-    public <T> void put(String namespace, String id, T entity)
+    public <T> void put(String namespace, String id, T item)
     {
         final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(namespace, id);
 
-        final EntityId mapKey = getMapKey(namespace, id);
+        final ItemId mapKey = getMapKey(namespace, id);
 
-        addToPending(mapKey, () -> transaction.set(docId, entity));
+        addToPending(mapKey, () -> transaction.set(docId, item));
     }
 
     @Override
@@ -102,7 +102,7 @@ public class FirebaseTransaction extends FirebaseReadOps implements Transaction
     {
         final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(namespace, id);
 
-        final EntityId mapKey = getMapKey(namespace, id);
+        final ItemId mapKey = getMapKey(namespace, id);
 
         addToPending(mapKey, () -> transaction.delete(docId));
     }
@@ -114,26 +114,26 @@ public class FirebaseTransaction extends FirebaseReadOps implements Transaction
             .forEach(e -> apply(e.getKey(), e.getValue()));
     }
 
-    private EntityId getMapKey(String namespace, String entityId)
+    private ItemId getMapKey(String namespace, String id)
     {
-        return new EntityId(namespace, entityId);
+        return new ItemId(namespace, id);
     }
 
-    private void throwIfPreviouslyUpdated(String namespace, String entityId)
+    private void throwIfPreviouslyUpdated(String namespace, String id)
     {
-        final EntityId key = getMapKey(namespace, entityId);
+        final ItemId key = getMapKey(namespace, id);
 
         if (pending.containsKey(key))
         {
             final String message = String.format("Document %s/%s has a "
                 + "pending update. Read operations aren't allowed after "
-                + "updates", namespace, entityId);
+                + "updates", namespace, id);
 
             throw new StoreException(message);
         }
     }
 
-    private void addToPending(EntityId mapKey, Update update)
+    private void addToPending(ItemId mapKey, Update update)
     {
         pending.put(mapKey, update);
 
@@ -150,7 +150,7 @@ public class FirebaseTransaction extends FirebaseReadOps implements Transaction
         throw new TooManyWritesException(message);
     }
 
-    private void apply(EntityId key, Update update)
+    private void apply(ItemId key, Update update)
     {
         logger.info("Applying update {}/{}", key.getNamespace(), key.getId());
 

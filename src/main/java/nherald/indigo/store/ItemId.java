@@ -1,11 +1,11 @@
-package nherald.indigo;
+package nherald.indigo.store;
 
-public class EntityId
+public class ItemId
 {
     private final String namespace;
     private final String id;
 
-    public EntityId(String namespace, String id)
+    public ItemId(String namespace, String id)
     {
         this.namespace = namespace;
         this.id = id;
@@ -40,7 +40,7 @@ public class EntityId
             return false;
         if (getClass() != obj.getClass())
             return false;
-        EntityId other = (EntityId) obj;
+        ItemId other = (ItemId) obj;
         if (id == null) {
             if (other.id != null)
                 return false;
@@ -58,7 +58,7 @@ public class EntityId
     public String toString()
     {
         StringBuilder builder = new StringBuilder();
-        builder.append("EntityId [id=").append(id).append(", namespace=").append(namespace).append("]");
+        builder.append("ItemId [id=").append(id).append(", namespace=").append(namespace).append("]");
         return builder.toString();
     }
 }

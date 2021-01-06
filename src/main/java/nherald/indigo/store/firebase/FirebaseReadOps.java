@@ -21,13 +21,13 @@ public abstract class FirebaseReadOps implements StoreReadOps
     }
 
     @Override
-    public <T> T get(String namespace, String id, Class<T> itemType)
+    public <T> T get(String namespace, String id, Class<T> type)
     {
-        return get(namespace, Arrays.asList(id), itemType).get(0);
+        return get(namespace, Arrays.asList(id), type).get(0);
     }
 
     @Override
-    public <T> List<T> get(String namespace, List<String> ids, Class<T> itemType)
+    public <T> List<T> get(String namespace, List<String> ids, Class<T> type)
     {
         final List<FirebaseRawDocumentId> docIds = ids.stream()
             .map(id -> new FirebaseRawDocumentId(namespace, id))
@@ -41,7 +41,7 @@ public abstract class FirebaseReadOps implements StoreReadOps
                 .map(doc -> {
                     if (!doc.exists()) return null;
 
-                    return doc.asObject(itemType);
+                    return doc.asObject(type);
                 })
                 .collect(Collectors.toList());
         }
