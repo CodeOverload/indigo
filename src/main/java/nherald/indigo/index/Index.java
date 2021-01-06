@@ -10,8 +10,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import nherald.indigo.Entity;
+import nherald.indigo.helpers.IdHelpers;
 import nherald.indigo.index.terms.WordFilter;
-import nherald.indigo.store.IdValidator;
 import nherald.indigo.store.StoreReadOps;
 import nherald.indigo.store.uow.Transaction;
 
@@ -149,7 +149,7 @@ public class Index<T extends Entity>
     private String getSegmentId(String word)
     {
         final String segmentId = word.substring(0, 2);
-        return IdValidator.check(segmentId);
+        return IdHelpers.validate(segmentId);
     }
 
     private IndexSegment getSegmentForWord(String word, StoreReadOps transaction)

@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import nherald.indigo.store.IdValidator;
+import nherald.indigo.helpers.IdHelpers;
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.uow.Consumer;
@@ -39,7 +39,7 @@ public class FileStore implements Store
     public <T> List<T> get(String namespace, List<String> ids, Class<T> itemType)
     {
         return ids.stream()
-            .map(IdValidator::check)
+            .map(IdHelpers::validate)
             .map(id -> read(namespace, id, itemType))
             .collect(Collectors.toList());
     }
@@ -47,14 +47,14 @@ public class FileStore implements Store
     @Override
     public boolean exists(String namespace, String id)
     {
-        IdValidator.check(id);
+        IdHelpers.validate(id);
 
         return getFile(namespace, id).exists();
     }
 
     <T> void put(String namespace, String id, final T entity)
     {
-        IdValidator.check(id);
+        IdHelpers.validate(id);
 
         final File file = getFile(namespace, id);
         try
@@ -80,7 +80,7 @@ public class FileStore implements Store
 
     void delete(String namespace, String id)
     {
-        IdValidator.check(id);
+        IdHelpers.validate(id);
 
         final File file = getFile(namespace, id);
 
