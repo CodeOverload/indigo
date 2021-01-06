@@ -15,8 +15,8 @@ import java.util.concurrent.ExecutionException;
 
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.TooManyWritesException;
-import nherald.indigo.store.firebase.db.FirebaseDocument;
-import nherald.indigo.store.firebase.db.FirebaseDocumentId;
+import nherald.indigo.store.firebase.db.FirebaseRawDocument;
+import nherald.indigo.store.firebase.db.FirebaseRawDocumentId;
 import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
 import nherald.indigo.utils.Fruit;
 
@@ -33,13 +33,13 @@ class FirebaseTransactionTests
     private static final String orangeId = "orange";
     private static final String melonId = "melon";
 
-    private static final FirebaseDocumentId appleDocId = new FirebaseDocumentId(NAMESPACE, appleId);
-    private static final FirebaseDocumentId orangeDocId = new FirebaseDocumentId(NAMESPACE, orangeId);
-    private static final FirebaseDocumentId melonDocId = new FirebaseDocumentId(NAMESPACE, melonId);
+    private static final FirebaseRawDocumentId appleDocId = new FirebaseRawDocumentId(NAMESPACE, appleId);
+    private static final FirebaseRawDocumentId orangeDocId = new FirebaseRawDocumentId(NAMESPACE, orangeId);
+    private static final FirebaseRawDocumentId melonDocId = new FirebaseRawDocumentId(NAMESPACE, melonId);
 
-    private static final FirebaseDocument appleDoc = new TestFirebaseDocument(true, apple);
-    private static final FirebaseDocument orangeDoc = new TestFirebaseDocument(true, orange);
-    private static final FirebaseDocument notExistsDoc = new TestFirebaseDocument(false, null);
+    private static final FirebaseRawDocument appleDoc = new TestFirebaseDocument(true, apple);
+    private static final FirebaseRawDocument orangeDoc = new TestFirebaseDocument(true, orange);
+    private static final FirebaseRawDocument notExistsDoc = new TestFirebaseDocument(false, null);
 
     private static final int MAX_WRITES = 500;
 
@@ -65,7 +65,7 @@ class FirebaseTransactionTests
         throws InterruptedException, ExecutionException
     {
         final String id = "apple";
-        final FirebaseDocumentId docId = new FirebaseDocumentId(NAMESPACE, id);
+        final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(NAMESPACE, id);
 
         when(rawTransaction.getAll(List.of(docId)))
             .thenReturn(List.of(appleDoc));
@@ -146,8 +146,8 @@ class FirebaseTransactionTests
         final String id1 = "apple";
         final String id2 = "orange";
 
-        final FirebaseDocumentId docId1 = new FirebaseDocumentId(NAMESPACE, id1);
-        final FirebaseDocumentId docId2 = new FirebaseDocumentId(NAMESPACE, id2);
+        final FirebaseRawDocumentId docId1 = new FirebaseRawDocumentId(NAMESPACE, id1);
+        final FirebaseRawDocumentId docId2 = new FirebaseRawDocumentId(NAMESPACE, id2);
 
         when(rawTransaction.getAll(List.of(docId2, docId1)))
             .thenReturn(List.of(orangeDoc, appleDoc));
@@ -202,7 +202,7 @@ class FirebaseTransactionTests
         throws InterruptedException, ExecutionException
     {
         final String id = "apple";
-        final FirebaseDocumentId docId = new FirebaseDocumentId(NAMESPACE, id);
+        final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(NAMESPACE, id);
 
         when(rawTransaction.get(docId))
             .thenReturn(appleDoc);

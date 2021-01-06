@@ -1,11 +1,11 @@
 package nherald.indigo.store.firebase.db;
 
-public class FirebaseDocumentId
+public class FirebaseRawDocumentId
 {
     private final String collection;
     private final String id;
 
-    public FirebaseDocumentId(String collection, String id)
+    public FirebaseRawDocumentId(String collection, String id)
     {
         this.collection = collection;
         this.id = id;
@@ -40,7 +40,7 @@ public class FirebaseDocumentId
             return false;
         if (getClass() != obj.getClass())
             return false;
-        FirebaseDocumentId other = (FirebaseDocumentId) obj;
+        FirebaseRawDocumentId other = (FirebaseRawDocumentId) obj;
         if (id == null) {
             if (other.id != null)
                 return false;

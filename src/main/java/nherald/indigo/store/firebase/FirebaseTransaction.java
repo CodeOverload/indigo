@@ -15,8 +15,8 @@ import nherald.indigo.store.uow.Transaction;
 import nherald.indigo.EntityId;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.TooManyWritesException;
-import nherald.indigo.store.firebase.db.FirebaseDocument;
-import nherald.indigo.store.firebase.db.FirebaseDocumentId;
+import nherald.indigo.store.firebase.db.FirebaseRawDocument;
+import nherald.indigo.store.firebase.db.FirebaseRawDocumentId;
 
 /**
  * Single-use transaction
@@ -76,13 +76,13 @@ public class FirebaseTransaction implements Transaction
     {
         ids.forEach(id -> throwIfPreviouslyUpdated(namespace, id));
 
-        final List<FirebaseDocumentId> docIds = ids.stream()
-            .map(id -> new FirebaseDocumentId(namespace, id))
+        final List<FirebaseRawDocumentId> docIds = ids.stream()
+            .map(id -> new FirebaseRawDocumentId(namespace, id))
             .collect(Collectors.toList());
 
         try
         {
-            final List<FirebaseDocument> docs = transaction.getAll(docIds);
+            final List<FirebaseRawDocument> docs = transaction.getAll(docIds);
 
             return docs.stream()
                 .map(doc -> {
@@ -104,11 +104,11 @@ public class FirebaseTransaction implements Transaction
     {
         throwIfPreviouslyUpdated(namespace, entityId);
 
-        final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);
+        final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(namespace, entityId);
 
         try
         {
-            final FirebaseDocument doc = transaction.get(docId);
+            final FirebaseRawDocument doc = transaction.get(docId);
 
             return doc.exists();
         }
@@ -121,7 +121,7 @@ public class FirebaseTransaction implements Transaction
     @Override
     public <T> void put(String namespace, String entityId, T entity)
     {
-        final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);
+        final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(namespace, entityId);
 
         final EntityId mapKey = getMapKey(namespace, entityId);
 
@@ -131,7 +131,7 @@ public class FirebaseTransaction implements Transaction
     @Override
     public void delete(String namespace, String entityId)
     {
-        final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, entityId);
+        final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(namespace, entityId);
 
         final EntityId mapKey = getMapKey(namespace, entityId);
 

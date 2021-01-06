@@ -5,9 +5,9 @@ import java.util.concurrent.ExecutionException;
 
 import nherald.indigo.store.uow.Consumer;
 
-public interface FirebaseDatabase extends FirebaseReadOps
+public interface FirebaseRawDatabase extends FirebaseRawReadOps
 {
-    Collection<FirebaseDocumentId> list(String collectionId);
+    Collection<FirebaseRawDocumentId> list(String collectionId);
 
     void transaction(Consumer<FirebaseRawTransaction> runnable)
         throws InterruptedException, ExecutionException;

@@ -13,11 +13,11 @@ import com.google.cloud.firestore.Firestore;
 
 import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
 import nherald.indigo.store.uow.Consumer;
-import nherald.indigo.store.firebase.db.FirebaseDatabase;
-import nherald.indigo.store.firebase.db.FirebaseDocument;
-import nherald.indigo.store.firebase.db.FirebaseDocumentId;
+import nherald.indigo.store.firebase.db.FirebaseRawDatabase;
+import nherald.indigo.store.firebase.db.FirebaseRawDocument;
+import nherald.indigo.store.firebase.db.FirebaseRawDocumentId;
 
-public class FirestoreWrapper implements FirebaseDatabase
+public class FirestoreWrapper implements FirebaseRawDatabase
 {
     private final Firestore database;
 
@@ -27,7 +27,7 @@ public class FirestoreWrapper implements FirebaseDatabase
     }
 
     @Override
-    public FirebaseDocument get(FirebaseDocumentId id)
+    public FirebaseRawDocument get(FirebaseRawDocumentId id)
         throws InterruptedException, ExecutionException
     {
         final ApiFuture<DocumentSnapshot> future = asRef(id).get();
@@ -36,7 +36,7 @@ public class FirestoreWrapper implements FirebaseDatabase
     }
 
     @Override
-    public List<FirebaseDocument> getAll(List<FirebaseDocumentId> ids)
+    public List<FirebaseRawDocument> getAll(List<FirebaseRawDocumentId> ids)
         throws InterruptedException, ExecutionException
     {
         final DocumentReference[] docRefs = asRefs(ids);
@@ -50,7 +50,7 @@ public class FirestoreWrapper implements FirebaseDatabase
     }
 
     @Override
-    public Collection<FirebaseDocumentId> list(String collectionId)
+    public Collection<FirebaseRawDocumentId> list(String collectionId)
     {
         final Iterable<DocumentReference> collectionRef
             = database.collection(collectionId).listDocuments();
@@ -71,22 +71,22 @@ public class FirestoreWrapper implements FirebaseDatabase
         }).get();
     }
 
-    private DocumentReference[] asRefs(List<FirebaseDocumentId> ids)
+    private DocumentReference[] asRefs(List<FirebaseRawDocumentId> ids)
     {
         return ids.stream()
             .map(this::asRef)
             .toArray(DocumentReference[]::new);
     }
 
-    DocumentReference asRef(FirebaseDocumentId id)
+    DocumentReference asRef(FirebaseRawDocumentId id)
     {
         return database.collection(id.getCollection())
             .document(id.getId());
     }
 
-    private static FirebaseDocumentId asId(DocumentReference docRef)
+    private static FirebaseRawDocumentId asId(DocumentReference docRef)
     {
-        return new FirebaseDocumentId(docRef.getParent().getId(),
+        return new FirebaseRawDocumentId(docRef.getParent().getId(),
             docRef.getId());
     }
 }

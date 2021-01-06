@@ -1,8 +1,8 @@
 package nherald.indigo.store.firebase.db;
 
-public interface FirebaseRawTransaction extends FirebaseReadOps
+public interface FirebaseRawTransaction extends FirebaseRawReadOps
 {
-    <T> void set(FirebaseDocumentId id, T entity);
+    <T> void set(FirebaseRawDocumentId id, T entity);
 
-    void delete(FirebaseDocumentId id);
+    void delete(FirebaseRawDocumentId id);
 }

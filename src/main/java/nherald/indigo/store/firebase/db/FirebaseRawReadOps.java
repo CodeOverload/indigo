@@ -3,11 +3,11 @@ package nherald.indigo.store.firebase.db;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-public interface FirebaseReadOps
+public interface FirebaseRawReadOps
 {
-    FirebaseDocument get(FirebaseDocumentId id)
+    FirebaseRawDocument get(FirebaseRawDocumentId id)
         throws InterruptedException, ExecutionException;
 
-    List<FirebaseDocument> getAll(List<FirebaseDocumentId> ids)
+    List<FirebaseRawDocument> getAll(List<FirebaseRawDocumentId> ids)
         throws InterruptedException, ExecutionException;
 }

@@ -8,18 +8,18 @@ import java.util.stream.Collectors;
 
 import nherald.indigo.store.Store;
 import nherald.indigo.store.StoreException;
-import nherald.indigo.store.firebase.db.FirebaseDatabase;
-import nherald.indigo.store.firebase.db.FirebaseDocument;
-import nherald.indigo.store.firebase.db.FirebaseDocumentId;
+import nherald.indigo.store.firebase.db.FirebaseRawDatabase;
+import nherald.indigo.store.firebase.db.FirebaseRawDocument;
+import nherald.indigo.store.firebase.db.FirebaseRawDocumentId;
 import nherald.indigo.store.uow.Consumer;
 import nherald.indigo.store.uow.Transaction;
 import nherald.indigo.store.uow.WrapTransaction;
 
 public class FirebaseStore implements Store
 {
-    private final FirebaseDatabase database;
+    private final FirebaseRawDatabase database;
 
-    public FirebaseStore(FirebaseDatabase database)
+    public FirebaseStore(FirebaseRawDatabase database)
     {
         this.database = database;
     }
@@ -33,13 +33,13 @@ public class FirebaseStore implements Store
     @Override
     public <T> List<T> get(String namespace, List<String> ids, Class<T> itemType)
     {
-        final List<FirebaseDocumentId> docIds = ids.stream()
-            .map(id -> new FirebaseDocumentId(namespace, id))
+        final List<FirebaseRawDocumentId> docIds = ids.stream()
+            .map(id -> new FirebaseRawDocumentId(namespace, id))
             .collect(Collectors.toList());
 
         try
         {
-            final List<FirebaseDocument> docs = database.getAll(docIds);
+            final List<FirebaseRawDocument> docs = database.getAll(docIds);
 
             return docs.stream()
                 .map(doc -> {
@@ -58,11 +58,11 @@ public class FirebaseStore implements Store
     @Override
     public boolean exists(String namespace, String id)
     {
-        final FirebaseDocumentId docId = new FirebaseDocumentId(namespace, id);
+        final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(namespace, id);
 
         try
         {
-            final FirebaseDocument document = database.get(docId);
+            final FirebaseRawDocument document = database.get(docId);
 
             return document.exists();
         }
@@ -77,7 +77,7 @@ public class FirebaseStore implements Store
     {
         return database.list(namespace)
             .stream()
-            .map(FirebaseDocumentId::getId)
+            .map(FirebaseRawDocumentId::getId)
             .collect(Collectors.toList());
     }
 

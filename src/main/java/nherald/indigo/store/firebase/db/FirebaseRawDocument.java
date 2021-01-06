@@ -1,6 +1,6 @@
 package nherald.indigo.store.firebase.db;
 
-public interface FirebaseDocument
+public interface FirebaseRawDocument
 {
     boolean exists();
 

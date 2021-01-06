@@ -1,8 +1,8 @@
 package nherald.indigo.store.firebase;
 
-import nherald.indigo.store.firebase.db.FirebaseDocument;
+import nherald.indigo.store.firebase.db.FirebaseRawDocument;
 
-public class TestFirebaseDocument implements FirebaseDocument
+public class TestFirebaseDocument implements FirebaseRawDocument
 {
     private final boolean exists;
     private final Object entity;

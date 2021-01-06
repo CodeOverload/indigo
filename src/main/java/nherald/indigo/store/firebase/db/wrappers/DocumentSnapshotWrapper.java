@@ -2,9 +2,9 @@ package nherald.indigo.store.firebase.db.wrappers;
 
 import com.google.cloud.firestore.DocumentSnapshot;
 
-import nherald.indigo.store.firebase.db.FirebaseDocument;
+import nherald.indigo.store.firebase.db.FirebaseRawDocument;
 
-public class DocumentSnapshotWrapper implements FirebaseDocument
+public class DocumentSnapshotWrapper implements FirebaseRawDocument
 {
     private final DocumentSnapshot document;
 

@@ -10,8 +10,8 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Transaction;
 
 import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
-import nherald.indigo.store.firebase.db.FirebaseDocument;
-import nherald.indigo.store.firebase.db.FirebaseDocumentId;
+import nherald.indigo.store.firebase.db.FirebaseRawDocument;
+import nherald.indigo.store.firebase.db.FirebaseRawDocumentId;
 
 public class TransactionWrapper implements FirebaseRawTransaction
 {
@@ -25,7 +25,7 @@ public class TransactionWrapper implements FirebaseRawTransaction
     }
 
     @Override
-    public FirebaseDocument get(FirebaseDocumentId id)
+    public FirebaseRawDocument get(FirebaseRawDocumentId id)
         throws InterruptedException, ExecutionException
     {
         final ApiFuture<DocumentSnapshot> doc = transaction.get(database.asRef(id));
@@ -34,7 +34,7 @@ public class TransactionWrapper implements FirebaseRawTransaction
     }
 
     @Override
-    public List<FirebaseDocument> getAll(List<FirebaseDocumentId> ids)
+    public List<FirebaseRawDocument> getAll(List<FirebaseRawDocumentId> ids)
         throws InterruptedException, ExecutionException
     {
         final DocumentReference[] docIds = ids.stream()
@@ -48,13 +48,13 @@ public class TransactionWrapper implements FirebaseRawTransaction
     }
 
     @Override
-    public <T> void set(FirebaseDocumentId id, T entity)
+    public <T> void set(FirebaseRawDocumentId id, T entity)
     {
         transaction.set(database.asRef(id), entity);
     }
 
     @Override
-    public void delete(FirebaseDocumentId id)
+    public void delete(FirebaseRawDocumentId id)
     {
         transaction.delete(database.asRef(id));
     }

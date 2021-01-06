@@ -17,9 +17,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.Mockito.*;
 
-import nherald.indigo.store.firebase.db.FirebaseDatabase;
-import nherald.indigo.store.firebase.db.FirebaseDocument;
-import nherald.indigo.store.firebase.db.FirebaseDocumentId;
+import nherald.indigo.store.firebase.db.FirebaseRawDatabase;
+import nherald.indigo.store.firebase.db.FirebaseRawDocument;
+import nherald.indigo.store.firebase.db.FirebaseRawDocumentId;
 import nherald.indigo.store.firebase.db.FirebaseRawTransaction;
 import nherald.indigo.store.uow.Consumer;
 import nherald.indigo.store.uow.Transaction;
@@ -34,14 +34,14 @@ class FirebaseStoreTests
     private static final Fruit pear = new Fruit("Pear");
     private static final Fruit orange = new Fruit("Orange");
 
-    private static final FirebaseDocument appleDocument = new TestFirebaseDocument(true, apple);
-    private static final FirebaseDocument pearDocument = new TestFirebaseDocument(true, pear);
-    private static final FirebaseDocument orangeDocument = new TestFirebaseDocument(true, orange);
+    private static final FirebaseRawDocument appleDocument = new TestFirebaseDocument(true, apple);
+    private static final FirebaseRawDocument pearDocument = new TestFirebaseDocument(true, pear);
+    private static final FirebaseRawDocument orangeDocument = new TestFirebaseDocument(true, orange);
 
-    private static final FirebaseDocument notExistDocument = new TestFirebaseDocument(false, null);
+    private static final FirebaseRawDocument notExistDocument = new TestFirebaseDocument(false, null);
 
     @Mock
-    private FirebaseDatabase database;
+    private FirebaseRawDatabase database;
 
     @Mock
     private FirebaseRawTransaction rawTransaction;
@@ -64,7 +64,7 @@ class FirebaseStoreTests
     void get_single_returnsEntity_whenExists()
         throws InterruptedException, ExecutionException
     {
-        final List<FirebaseDocumentId> ids = createIds("orange");
+        final List<FirebaseRawDocumentId> ids = createIds("orange");
 
         when(database.getAll(ids))
             .thenReturn(List.of(
@@ -82,7 +82,7 @@ class FirebaseStoreTests
     void get_single_returnsNull_whenEntityDoesntExist()
         throws InterruptedException, ExecutionException
     {
-        final List<FirebaseDocumentId> ids = createIds("orange");
+        final List<FirebaseRawDocumentId> ids = createIds("orange");
 
         when(database.getAll(ids))
             .thenReturn(List.of(
@@ -98,7 +98,7 @@ class FirebaseStoreTests
     void get_multiple_returnsAll_whenAllExist()
         throws InterruptedException, ExecutionException
     {
-        final List<FirebaseDocumentId> ids = createIds("apple", "pear", "orange");
+        final List<FirebaseRawDocumentId> ids = createIds("apple", "pear", "orange");
 
         when(database.getAll(ids))
             .thenReturn(List.of(
@@ -118,7 +118,7 @@ class FirebaseStoreTests
     void get_multiple_returnsNull_whenEntityDoesntExist()
         throws InterruptedException, ExecutionException
     {
-        final List<FirebaseDocumentId> ids = createIds("apple", "pear", "orange");
+        final List<FirebaseRawDocumentId> ids = createIds("apple", "pear", "orange");
 
         when(database.getAll(ids))
             .thenReturn(List.of(
@@ -138,7 +138,7 @@ class FirebaseStoreTests
     void list_whenSomeEntitiesExist()
         throws InterruptedException, ExecutionException
     {
-        final List<FirebaseDocumentId> ids = createIds("apple", "pear", "orange");
+        final List<FirebaseRawDocumentId> ids = createIds("apple", "pear", "orange");
 
         when(database.list(NAMESPACE))
             .thenReturn(ids);
@@ -154,7 +154,7 @@ class FirebaseStoreTests
     void list_whenNoEntitiesExist()
         throws InterruptedException, ExecutionException
     {
-        final List<FirebaseDocumentId> ids = Collections.emptyList();
+        final List<FirebaseRawDocumentId> ids = Collections.emptyList();
 
         when(database.list(NAMESPACE))
             .thenReturn(ids);
@@ -191,16 +191,16 @@ class FirebaseStoreTests
         verify(runnable).run(eq(wrappedTransaction));
     }
 
-    private static final List<FirebaseDocumentId> createIds(String ... ids)
+    private static final List<FirebaseRawDocumentId> createIds(String ... ids)
     {
         return Stream.of(ids)
             .map(FirebaseStoreTests::createId)
             .collect(Collectors.toList());
     }
 
-    private static final FirebaseDocumentId createId(String id)
+    private static final FirebaseRawDocumentId createId(String id)
     {
-        return new FirebaseDocumentId(NAMESPACE, id);
+        return new FirebaseRawDocumentId(NAMESPACE, id);
     }
 }
 
