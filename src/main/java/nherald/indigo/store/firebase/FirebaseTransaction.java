@@ -88,21 +88,21 @@ public class FirebaseTransaction extends FirebaseReadOps implements Transaction
     }
 
     @Override
-    public <T> void put(String namespace, String entityId, T entity)
+    public <T> void put(String namespace, String id, T entity)
     {
-        final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(namespace, entityId);
+        final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(namespace, id);
 
-        final EntityId mapKey = getMapKey(namespace, entityId);
+        final EntityId mapKey = getMapKey(namespace, id);
 
         addToPending(mapKey, () -> transaction.set(docId, entity));
     }
 
     @Override
-    public void delete(String namespace, String entityId)
+    public void delete(String namespace, String id)
     {
-        final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(namespace, entityId);
+        final FirebaseRawDocumentId docId = new FirebaseRawDocumentId(namespace, id);
 
-        final EntityId mapKey = getMapKey(namespace, entityId);
+        final EntityId mapKey = getMapKey(namespace, id);
 
         addToPending(mapKey, () -> transaction.delete(docId));
     }

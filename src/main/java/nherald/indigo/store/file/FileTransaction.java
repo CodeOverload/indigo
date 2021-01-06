@@ -23,35 +23,35 @@ public class FileTransaction implements Transaction
         this.store = store;
     }
 
-    public <T> T get(String namespace, String entityId, Class<T> entityType)
+    public <T> T get(String namespace, String id, Class<T> entityType)
     {
-        return store.get(namespace, entityId, entityType);
+        return store.get(namespace, id, entityType);
     }
 
-    public <T> List<T> get(String namespace, List<String> entityIds, Class<T> entityType)
+    public <T> List<T> get(String namespace, List<String> id, Class<T> entityType)
     {
-        return store.get(namespace, entityIds, entityType);
-    }
-
-    @Override
-    public boolean exists(String namespace, String entityId)
-    {
-        return store.exists(namespace, entityId);
+        return store.get(namespace, id, entityType);
     }
 
     @Override
-    public <T> void put(String namespace, String entityId, T entity)
+    public boolean exists(String namespace, String id)
     {
-        pending.put(getMapKey(namespace, entityId), () -> {
-            store.put(namespace, entityId, entity);
+        return store.exists(namespace, id);
+    }
+
+    @Override
+    public <T> void put(String namespace, String id, T entity)
+    {
+        pending.put(getMapKey(namespace, id), () -> {
+            store.put(namespace, id, entity);
         });
     }
 
     @Override
-    public void delete(String namespace, String entityId)
+    public void delete(String namespace, String id)
     {
-        pending.put(getMapKey(namespace, entityId), () -> {
-            store.delete(namespace, entityId);
+        pending.put(getMapKey(namespace, id), () -> {
+            store.delete(namespace, id);
         });
     }
 
@@ -66,9 +66,9 @@ public class FileTransaction implements Transaction
      *   dependencies between each other, so it shouldn't matter which order
      *   they're saved in
      */
-    public void add(String namespace, String entityId, Update update)
+    public void add(String namespace, String id, Update update)
     {
-        pending.put(getMapKey(namespace, entityId), update);
+        pending.put(getMapKey(namespace, id), update);
     }
 
     void commit()
@@ -78,12 +78,12 @@ public class FileTransaction implements Transaction
             .forEach(this::commitChange);
     }
 
-    private String getMapKey(String namespace, String entityId)
+    private String getMapKey(String namespace, String id)
     {
         return new StringBuilder(50)
             .append(namespace)
             .append("/")
-            .append(entityId)
+            .append(id)
             .toString();
     }
 
