@@ -85,28 +85,24 @@ public class Entities<T extends Entity>
     {
         final EntitiesInfo info = loadInfo(transaction);
 
-        entities.stream()
-            .forEach(entity -> {
-                final long id;
+        for (T entity : entities)
+        {
+            // This is a new entity
+            if (entity.getId() == null)
+            {
+                entity.setId(info.generateId());
+            }
+            // Existing entity
+            else
+            {
+                // Remove from all indices as we don't want them containing stale data
+                indices.removeEntity(entity.getId(), transaction);
+            }
 
-                // This is a new entity
-                if (entity.getId() == null)
-                {
-                    id = info.generateId();
-                    entity.setId(id);
-                }
-                // Existing entity
-                else
-                {
-                    // Remove from all indices as we don't want them containing stale data
-                    id = entity.getId();
-                    indices.removeEntity(id, transaction);
-                }
+            transaction.put(NAMESPACE, IdHelpers.asString(entity.getId()), entity);
 
-                transaction.put(NAMESPACE, IdHelpers.asString(id), entity);
-
-                indices.addEntity(entity, transaction);
-            });
+            indices.addEntity(entity, transaction);
+        }
 
         transaction.put(NAMESPACE, INFO_ID, info);
     }
