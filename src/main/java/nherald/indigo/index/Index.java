@@ -75,6 +75,16 @@ public class Index<T extends Entity>
         return target;
     }
 
+    WordFilter getWordFilter()
+    {
+        return wordFilter;
+    }
+
+    StoreReadOps getStore()
+    {
+        return store;
+    }
+
     public Set<Long> get(String word)
     {
         final IndexSegment segment = getSegmentForWord(word, store);
