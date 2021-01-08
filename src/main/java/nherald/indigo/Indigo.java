@@ -25,12 +25,27 @@ public class Indigo<T extends Entity>
 
     private final Store store;
 
-    public Indigo(Class<T> entityType, IndicesManager<T> indices,
+    Indigo(Class<T> entityType, IndicesManager<T> indices,
         Store store)
     {
         this.entityType = entityType;
         this.indices = indices;
         this.store = store;
+    }
+
+    Class<T> getEntityType()
+    {
+        return entityType;
+    }
+
+    IndicesManager<T> getIndicesManager()
+    {
+        return indices;
+    }
+
+    Store getStore()
+    {
+        return store;
     }
 
     public T get(long id)

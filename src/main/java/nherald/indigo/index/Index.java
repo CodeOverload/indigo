@@ -56,7 +56,7 @@ public class Index<T extends Entity>
     private final WordFilter wordFilter;
     private final StoreReadOps store;
 
-    public Index(String id, IndexTarget<T> target,
+    Index(String id, IndexTarget<T> target,
         WordFilter wordFilter, StoreReadOps store)
     {
         this.id = id;

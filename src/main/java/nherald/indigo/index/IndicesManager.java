@@ -18,6 +18,11 @@ public class IndicesManager<T extends Entity>
         this.indices = indices;
     }
 
+    Collection<Index<T>> getIndices()
+    {
+        return indices;
+    }
+
     public Collection<Long> search(String indexId, String word)
     {
         final Optional<Index<T>> index = indices.stream()
