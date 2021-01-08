@@ -18,10 +18,20 @@ public class IndigoAdmin<T extends Entity>
     private final Indigo<T> entities;
     private final IndicesManager<T> indices;
 
-    public IndigoAdmin(Indigo<T> entities, IndicesManager<T> indices)
+    IndigoAdmin(Indigo<T> entities, IndicesManager<T> indices)
     {
         this.entities = entities;
         this.indices = indices;
+    }
+
+    Indigo<T> getIndigo()
+    {
+        return entities;
+    }
+
+    IndicesManager<T> getIndicesManager()
+    {
+        return indices;
     }
 
     /**
