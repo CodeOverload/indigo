@@ -13,14 +13,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class IndexSegmentTests
+class IndexSegmentDataTests
 {
-    private IndexSegment subject;
+    private IndexSegmentData subject;
 
     @BeforeEach
     void before()
     {
-        subject = new IndexSegment();
+        subject = new IndexSegmentData();
 
         subject.add("butterfly", 3);
         subject.add("ostrich", 3);

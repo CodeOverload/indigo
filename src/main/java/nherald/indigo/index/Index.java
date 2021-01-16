@@ -87,7 +87,7 @@ public class Index<T extends Entity>
 
     public Set<Long> get(String word)
     {
-        final IndexSegment segment = getSegmentForWord(word, store);
+        final IndexSegmentData segment = getSegmentForWord(word, store);
 
         return segment.get(word);
     }
@@ -105,7 +105,7 @@ public class Index<T extends Entity>
                 .collect(Collectors.toCollection(LinkedHashSet::new))
         );
 
-        final Map<String, IndexSegment> segmentMap
+        final Map<String, IndexSegmentData> segmentMap
             = getSegmentsById(segmentIds, transaction);
 
         final Contents contents = getContents(transaction);
@@ -138,11 +138,11 @@ public class Index<T extends Entity>
         final List<String> segmentIds = new ArrayList<>(contents.get(entityId));
 
         // Fetch them in one go
-        final Map<String, IndexSegment> segments = getSegmentsById(segmentIds,
+        final Map<String, IndexSegmentData> segments = getSegmentsById(segmentIds,
             transaction);
 
         segments.entrySet().forEach(entry -> {
-            final IndexSegment segment = entry.getValue();
+            final IndexSegmentData segment = entry.getValue();
 
             segment.remove(entityId);
 
@@ -162,7 +162,7 @@ public class Index<T extends Entity>
         return IdHelpers.validate(segmentId);
     }
 
-    private IndexSegment getSegmentForWord(String word, StoreReadOps transaction)
+    private IndexSegmentData getSegmentForWord(String word, StoreReadOps transaction)
     {
         final String segmentId = getSegmentId(word);
 
@@ -174,17 +174,17 @@ public class Index<T extends Entity>
         return String.format("%s-%s", getId(), segmentId);
     }
 
-    private IndexSegment getSegmentById(String segmentId, StoreReadOps transaction)
+    private IndexSegmentData getSegmentById(String segmentId, StoreReadOps transaction)
     {
         final String storeId = getStoreId(segmentId);
 
         // Load from persistent storage if it's saved
-        final IndexSegment loadedSegment = transaction.get(NAMESPACE, storeId, IndexSegment.class);
+        final IndexSegmentData loadedSegment = transaction.get(NAMESPACE, storeId, IndexSegmentData.class);
 
         if (loadedSegment != null) return loadedSegment;
 
         // Otherwise create a new segment
-        return new IndexSegment();
+        return new IndexSegmentData();
     }
 
     /**
@@ -194,26 +194,26 @@ public class Index<T extends Entity>
      * @return map of segments, keyed by segment id. An empty segment will be
      * returned for each id that wasn't in the store
      */
-    private Map<String, IndexSegment> getSegmentsById(List<String> segmentIds,
+    private Map<String, IndexSegmentData> getSegmentsById(List<String> segmentIds,
         Transaction transaction)
     {
         final List<String> storeIds = segmentIds.stream()
             .map(this::getStoreId)
             .collect(Collectors.toList());
 
-        final List<IndexSegment> segments = transaction.get(NAMESPACE,
-            storeIds, IndexSegment.class);
+        final List<IndexSegmentData> segments = transaction.get(NAMESPACE,
+            storeIds, IndexSegmentData.class);
 
-        final Map<String, IndexSegment> segmentMap = new HashMap<>();
+        final Map<String, IndexSegmentData> segmentMap = new HashMap<>();
 
         for (int i = 0; i < segmentIds.size(); ++i)
         {
             final String segmentId = segmentIds.get(i);
-            IndexSegment segment = segments.get(i);
+            IndexSegmentData segment = segments.get(i);
 
             if (segment == null)
             {
-                segment = new IndexSegment();
+                segment = new IndexSegmentData();
             }
 
             segmentMap.put(segmentId, segment);

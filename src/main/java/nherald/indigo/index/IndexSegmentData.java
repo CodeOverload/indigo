@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-public class IndexSegment
+public class IndexSegmentData
 {
     /**
      * Map of word (or prefix, in the case of ngram indexes) to the set of
@@ -18,7 +18,7 @@ public class IndexSegment
      */
     private Map<String, Set<Long>> map;
 
-    public IndexSegment()
+    public IndexSegmentData()
     {
         map = new HashMap<>(1001);
     }
@@ -113,7 +113,7 @@ public class IndexSegment
             return false;
         if (getClass() != obj.getClass())
             return false;
-        IndexSegment other = (IndexSegment) obj;
+        IndexSegmentData other = (IndexSegmentData) obj;
         if (map == null) {
             if (other.map != null)
                 return false;
@@ -126,7 +126,7 @@ public class IndexSegment
     public String toString()
     {
         StringBuilder builder = new StringBuilder();
-        builder.append("IndexSegment [map=").append(map).append("]");
+        builder.append("IndexSegmentData [map=").append(map).append("]");
         return builder.toString();
     }
 

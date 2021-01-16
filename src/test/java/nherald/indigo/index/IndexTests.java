@@ -27,8 +27,8 @@ class IndexTests
 {
     private static final String NAMESPACE = "indices";
 
-    private static final List<IndexSegment> listContainingNull
-        = Arrays.asList((IndexSegment) null);
+    private static final List<IndexSegmentData> listContainingNull
+        = Arrays.asList((IndexSegmentData) null);
 
     private WordFilter wordFilter;
 
@@ -52,19 +52,19 @@ class IndexTests
     @Test
     void get_usesCorrectSegment_whenTermInIndex()
     {
-        final IndexSegment segment = createSegment("pantha", List.of(4l, 7l));
-        when(store.get(NAMESPACE, "name-pa", IndexSegment.class)).thenReturn(segment);
+        final IndexSegmentData segment = createSegment("pantha", List.of(4l, 7l));
+        when(store.get(NAMESPACE, "name-pa", IndexSegmentData.class)).thenReturn(segment);
 
         subject.get("pantha");
 
-        verify(store).get(NAMESPACE, "name-pa", IndexSegment.class);
+        verify(store).get(NAMESPACE, "name-pa", IndexSegmentData.class);
     }
 
     @Test
     void get_returnsCorrectIds_whenTermInIndex()
     {
-        final IndexSegment segment = createSegment("pantha", List.of(4l, 7l));
-        when(store.get(NAMESPACE, "name-pa", IndexSegment.class)).thenReturn(segment);
+        final IndexSegmentData segment = createSegment("pantha", List.of(4l, 7l));
+        when(store.get(NAMESPACE, "name-pa", IndexSegmentData.class)).thenReturn(segment);
 
         final Set<Long> actual = subject.get("pantha");
 
@@ -77,8 +77,8 @@ class IndexTests
     void get_returnsNull_whenTermNotInIndex_andSegmentHasBeenStored()
     {
         // Another word is contained in the stored segment, but not the one we're going to look up
-        final IndexSegment segment = createSegment("pans", List.of(4l, 7l));
-        when(store.get(NAMESPACE, "name-pa", IndexSegment.class)).thenReturn(segment);
+        final IndexSegmentData segment = createSegment("pans", List.of(4l, 7l));
+        when(store.get(NAMESPACE, "name-pa", IndexSegmentData.class)).thenReturn(segment);
 
         final Set<Long> actual = subject.get("pantha");
 
@@ -91,7 +91,7 @@ class IndexTests
     void get_returnsNull_whenTermNotInIndex_andSegmentNotAlreadyStored()
     {
         // The pa segment hasn't been stored
-        when(store.get(NAMESPACE, "name-pa", IndexSegment.class)).thenReturn(null);
+        when(store.get(NAMESPACE, "name-pa", IndexSegmentData.class)).thenReturn(null);
 
         final Set<Long> actual = subject.get("pantha");
 
@@ -111,12 +111,12 @@ class IndexTests
     @Test
     void add_storesCorrectSegment_whenSegmentNotAlreadyStored()
     {
-        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegment.class))
+        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegmentData.class))
             .thenReturn(listContainingNull);
 
         subject.add(List.of("pantha"), 46l, transaction);
 
-        final IndexSegment expectedSegment = createSegment("pantha", List.of(46l));
+        final IndexSegmentData expectedSegment = createSegment("pantha", List.of(46l));
 
         verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
     }
@@ -125,14 +125,14 @@ class IndexTests
     void add_updatesSegmentCorrectly_whenSegmentAlreadyStored()
     {
         // Already has ids 2 and 7 stored for this word
-        final IndexSegment segment = createSegment("pantha", List.of(2l, 7l));
-        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegment.class))
+        final IndexSegmentData segment = createSegment("pantha", List.of(2l, 7l));
+        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegmentData.class))
             .thenReturn(List.of(segment));
 
         // This should add id 46 to that list
         subject.add(List.of("pantha"), 46l, transaction);
 
-        final IndexSegment expectedSegment = createSegment("pantha", List.of(2l, 7l, 46l));
+        final IndexSegmentData expectedSegment = createSegment("pantha", List.of(2l, 7l, 46l));
 
         verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
     }
@@ -140,15 +140,15 @@ class IndexTests
     @Test
     void add_updatesSegmentCorrectly_whenMultipleWordsInSameSegment()
     {
-        final IndexSegment paSegment = createSegment("pantha", List.of(1l));
-        final IndexSegment tiSegment = createSegment("tiger", List.of(2l));
-        when(transaction.get(NAMESPACE, List.of("name-pa", "name-ti"), IndexSegment.class))
+        final IndexSegmentData paSegment = createSegment("pantha", List.of(1l));
+        final IndexSegmentData tiSegment = createSegment("tiger", List.of(2l));
+        when(transaction.get(NAMESPACE, List.of("name-pa", "name-ti"), IndexSegmentData.class))
             .thenReturn(List.of(paSegment, tiSegment));
 
         // Add two words that are in the same segment
         subject.add(List.of("pantha", "tiger", "parakeet"), 46l, transaction);
 
-        IndexSegment expectedSegment = createSegment("pantha", List.of(1l, 46l));
+        IndexSegmentData expectedSegment = createSegment("pantha", List.of(1l, 46l));
         expectedSegment.add("parakeet", 46l);
         verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
 
@@ -160,14 +160,14 @@ class IndexTests
     void add_updatesSegmentCorrectly_whenSegmentAlreadyStored_andIdAlreadyStoredAgainstWord()
     {
         // Already has ids 2 and 7 stored for this word
-        final IndexSegment segment = createSegment("pantha", List.of(2l, 7l));
-        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegment.class))
+        final IndexSegmentData segment = createSegment("pantha", List.of(2l, 7l));
+        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegmentData.class))
             .thenReturn(List.of(segment));
 
         // We're adding 7 again, so should still have just 2 and 7 saved back to the store
         subject.add(List.of("pantha"), 7l, transaction);
 
-        final IndexSegment expectedSegment = createSegment("pantha", List.of(2l, 7l));
+        final IndexSegmentData expectedSegment = createSegment("pantha", List.of(2l, 7l));
 
         verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
     }
@@ -175,18 +175,18 @@ class IndexTests
     @Test
     void add_updatesSegmentCorrectlyOnSuccessiveUpdates()
     {
-        IndexSegment segment = createSegment("pantha", List.of(2l, 7l));
-        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegment.class))
+        IndexSegmentData segment = createSegment("pantha", List.of(2l, 7l));
+        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegmentData.class))
             .thenReturn(List.of(segment));
 
         // First add 8
         subject.add(List.of("pantha"), 8l, transaction);
 
-        IndexSegment expectedSegment = createSegment("pantha", List.of(2l, 7l, 8l));
+        IndexSegmentData expectedSegment = createSegment("pantha", List.of(2l, 7l, 8l));
         verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
 
         reset(transaction);
-        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegment.class))
+        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegmentData.class))
             .thenReturn(List.of(expectedSegment));
 
         // Then add 10
@@ -199,18 +199,18 @@ class IndexTests
     @Test
     void add_handlesUpdatesToDifferentSegmentsCorrectly()
     {
-        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegment.class))
+        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegmentData.class))
             .thenReturn(listContainingNull);
 
         // First add 8 to pantha
         subject.add(List.of("pantha"), 8l, transaction);
 
-        IndexSegment expectedSegment = createSegment("pantha", List.of(8l));
+        IndexSegmentData expectedSegment = createSegment("pantha", List.of(8l));
         verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
 
         reset(transaction);
 
-        when(transaction.get(NAMESPACE, List.of("name-ti"), IndexSegment.class))
+        when(transaction.get(NAMESPACE, List.of("name-ti"), IndexSegmentData.class))
             .thenReturn(listContainingNull);
 
         // Then add 3 to tiger
@@ -224,9 +224,9 @@ class IndexTests
     void add_updatesMultipleSegmentsCorrectly_whenNoSegmentsStored()
     {
         final List<String> segmentIds = List.of("name-pa", "name-ti", "name-ch");
-        final List<IndexSegment> segments = Arrays.asList(null, null, null);
+        final List<IndexSegmentData> segments = Arrays.asList(null, null, null);
 
-        when(transaction.get(NAMESPACE, segmentIds, IndexSegment.class))
+        when(transaction.get(NAMESPACE, segmentIds, IndexSegmentData.class))
             .thenReturn(segments);
 
         // This should create a new segment for each prefix, and add id 46 to each of them
@@ -234,19 +234,19 @@ class IndexTests
 
         // 'pa' segment
         {
-            final IndexSegment segment = createSegment("pantha", List.of(46l));
+            final IndexSegmentData segment = createSegment("pantha", List.of(46l));
             verify(transaction).put(NAMESPACE, "name-pa", segment);
         }
 
         // 'ti' segment
         {
-            final IndexSegment segment = createSegment("tiger", List.of(46l));
+            final IndexSegmentData segment = createSegment("tiger", List.of(46l));
             verify(transaction).put(NAMESPACE, "name-ti", segment);
         }
 
         // 'ch' segment
         {
-            final IndexSegment segment = createSegment("cheetah", List.of(46l));
+            final IndexSegmentData segment = createSegment("cheetah", List.of(46l));
             verify(transaction).put(NAMESPACE, "name-ch", segment);
         }
     }
@@ -256,13 +256,13 @@ class IndexTests
     {
         final List<String> segmentIds = List.of("name-pa", "name-ti", "name-ch");
 
-        final List<IndexSegment> segments = Arrays.asList(
+        final List<IndexSegmentData> segments = Arrays.asList(
             createSegment("pantha", List.of(2l, 7l)),
             createSegment("tiger", List.of(1l, 8l, 7l)),
             createSegment("cheetah", List.of(8l))
         );
 
-        when(transaction.get(NAMESPACE, segmentIds, IndexSegment.class))
+        when(transaction.get(NAMESPACE, segmentIds, IndexSegmentData.class))
             .thenReturn(segments);
 
         // This should add id 46 to each of the segments
@@ -270,19 +270,19 @@ class IndexTests
 
         // 'pa' segment
         {
-            final IndexSegment segment = createSegment("pantha", List.of(2l, 7l, 46l));
+            final IndexSegmentData segment = createSegment("pantha", List.of(2l, 7l, 46l));
             verify(transaction).put(NAMESPACE, "name-pa", segment);
         }
 
         // 'ti' segment
         {
-            final IndexSegment segment = createSegment("tiger", List.of(1l, 8l, 7l, 46l));
+            final IndexSegmentData segment = createSegment("tiger", List.of(1l, 8l, 7l, 46l));
             verify(transaction).put(NAMESPACE, "name-ti", segment);
         }
 
         // 'ch' segment
         {
-            final IndexSegment segment = createSegment("cheetah", List.of(8l, 46l));
+            final IndexSegmentData segment = createSegment("cheetah", List.of(8l, 46l));
             verify(transaction).put(NAMESPACE, "name-ch", segment);
         }
     }
@@ -292,13 +292,13 @@ class IndexTests
     {
         final List<String> segmentIds = List.of("name-pa", "name-ti", "name-ch");
 
-        final List<IndexSegment> segments = Arrays.asList(
+        final List<IndexSegmentData> segments = Arrays.asList(
             createSegment("pantha", List.of(2l, 7l)),
             null, // The ti segment isn't stored
             createSegment("cheetah", List.of(8l))
         );
 
-        when(transaction.get(NAMESPACE, segmentIds, IndexSegment.class))
+        when(transaction.get(NAMESPACE, segmentIds, IndexSegmentData.class))
             .thenReturn(segments);
 
         // This should add id 46 to each of the segments
@@ -306,19 +306,19 @@ class IndexTests
 
         // 'pa' segment
         {
-            final IndexSegment segment = createSegment("pantha", List.of(2l, 7l, 46l));
+            final IndexSegmentData segment = createSegment("pantha", List.of(2l, 7l, 46l));
             verify(transaction).put(NAMESPACE, "name-pa", segment);
         }
 
         // 'ti' segment - new segment, so should just contain the new entity (46)
         {
-            final IndexSegment segment = createSegment("tiger", List.of(46l));
+            final IndexSegmentData segment = createSegment("tiger", List.of(46l));
             verify(transaction).put(NAMESPACE, "name-ti", segment);
         }
 
         // 'ch' segment
         {
-            final IndexSegment segment = createSegment("cheetah", List.of(8l, 46l));
+            final IndexSegmentData segment = createSegment("cheetah", List.of(8l, 46l));
             verify(transaction).put(NAMESPACE, "name-ch", segment);
         }
     }
@@ -326,7 +326,7 @@ class IndexTests
     @Test
     void add_addsAllWordsFromTheFilter()
     {
-        when(transaction.get(NAMESPACE, List.of("name-pa", "name-ra"), IndexSegment.class))
+        when(transaction.get(NAMESPACE, List.of("name-pa", "name-ra"), IndexSegmentData.class))
             .thenReturn(Arrays.asList(null, null));
 
         // Hypothetical filter that always returns the same two words
@@ -337,7 +337,7 @@ class IndexTests
         subject.add(List.of("pantha"), 8l, transaction);
 
         // Both words should be added to the relevant segment
-        IndexSegment expectedSegment = createSegment("pancetta", List.of(8l));
+        IndexSegmentData expectedSegment = createSegment("pancetta", List.of(8l));
         verify(transaction).put(NAMESPACE, "name-pa", expectedSegment);
 
         expectedSegment = createSegment("ravioli", List.of(8l));
@@ -347,7 +347,7 @@ class IndexTests
     @Test
     void add_updatesContents_whenContentsNotStored()
     {
-        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegment.class))
+        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegmentData.class))
             .thenReturn(listContainingNull);
 
         subject.add(List.of("pantha"), 8l, transaction);
@@ -361,8 +361,8 @@ class IndexTests
     @Test
     void add_updatesContents_whenContentsIsStored()
     {
-        final IndexSegment segment = createSegment("pantha", List.of(4l));
-        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegment.class))
+        final IndexSegmentData segment = createSegment("pantha", List.of(4l));
+        when(transaction.get(NAMESPACE, List.of("name-pa"), IndexSegmentData.class))
             .thenReturn(List.of(segment));
 
         // Entity 4 is already in segment 'pa', as per the current stored contents
@@ -394,10 +394,10 @@ class IndexTests
         when(transaction.get(NAMESPACE, "name-contents", Contents.class))
             .thenReturn(storedContents);
 
-        final List<IndexSegment> storedSegments = new ArrayList<>();
+        final List<IndexSegmentData> storedSegments = new ArrayList<>();
         // 'pa' segment
         {
-            final IndexSegment storedSegment = createSegment("pantha", List.of(4l, 6l, 5l));
+            final IndexSegmentData storedSegment = createSegment("pantha", List.of(4l, 6l, 5l));
             storedSegment.add("pans", 5);
             storedSegment.add("pans", 6);
             storedSegment.add("pairs", 5);
@@ -407,13 +407,13 @@ class IndexTests
 
         // 'ta' segment
         {
-            final IndexSegment storedSegment = createSegment("tarragon", List.of(5l));
+            final IndexSegmentData storedSegment = createSegment("tarragon", List.of(5l));
 
             storedSegments.add(storedSegment);
         }
 
         // All segments should be fetched in one go
-        when(transaction.get(NAMESPACE, List.of("name-pa", "name-ta"), IndexSegment.class))
+        when(transaction.get(NAMESPACE, List.of("name-pa", "name-ta"), IndexSegmentData.class))
             .thenReturn(storedSegments);
 
         // Remove 5
@@ -431,7 +431,7 @@ class IndexTests
 
         // 'pa' segment
         {
-            final IndexSegment storedSegment = createSegment("pantha", List.of(4l, 6l));
+            final IndexSegmentData storedSegment = createSegment("pantha", List.of(4l, 6l));
             storedSegment.add("pans", 6);
             verify(transaction).put(NAMESPACE, "name-pa", storedSegment);
         }
@@ -439,18 +439,18 @@ class IndexTests
         // 'ta' segment
         {
             // 5 was the only entry in this segment
-            final IndexSegment storedSegment = createSegment("tarragon", List.of());
+            final IndexSegmentData storedSegment = createSegment("tarragon", List.of());
             verify(transaction).put(NAMESPACE, "name-ta", storedSegment);
         }
 
         // Should be unchanged as 5 wasn't in segment 'ba' originally
-        verify(transaction, never()).get(NAMESPACE, "name-ba", IndexSegment.class); // Shouldn't make an attempt to load it
+        verify(transaction, never()).get(NAMESPACE, "name-ba", IndexSegmentData.class); // Shouldn't make an attempt to load it
         verify(transaction, never()).put(eq(NAMESPACE), eq("name-ba"), any());
     }
 
-    private static IndexSegment createSegment(String word, Collection<Long> ids)
+    private static IndexSegmentData createSegment(String word, Collection<Long> ids)
     {
-        final IndexSegment segment = new IndexSegment();
+        final IndexSegmentData segment = new IndexSegmentData();
 
         ids.stream()
             .forEach(id -> segment.add(word, id));
