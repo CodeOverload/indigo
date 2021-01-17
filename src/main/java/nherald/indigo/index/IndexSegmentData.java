@@ -13,8 +13,7 @@ import java.util.stream.Collectors;
 public class IndexSegmentData
 {
     /**
-     * Map of word (or prefix, in the case of ngram indexes) to the set of
-     * entity ids that contain that word
+     * Map of word to the set of entity ids that contain that word
      */
     private Map<String, Set<Long>> map;
 
@@ -45,6 +44,11 @@ public class IndexSegmentData
         map = newMap.entrySet()
             .stream()
             .collect(Collectors.toMap(Entry::getKey, e -> new HashSet<>(e.getValue())));
+    }
+
+    public Set<String> allWords()
+    {
+        return Collections.unmodifiableSet(map.keySet());
     }
 
     public Set<Long> get(String word)

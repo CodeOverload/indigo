@@ -14,14 +14,11 @@ public interface WordFilter
      * Applies all filters and transformations to a word, to produce the terms
      * that should be added to the index for this word.
      *
-     * Note that this can return an empty result as some words will be filtered
-     * out (e.g. if a stop word filter is applied). Multiple strings can be
-     * returned if an ngram is applied. Ngraming is where a word is split into
-     * all its possible prefixes.
-     *    E.g. train will result in: train, trai, tra, tr, t
+     * <p>Note that this can return an empty result as some words will be
+     * filtered out (e.g. if a stop word filter is applied)
      *
-     * (Implementations are likely to ignore prefixes under a certain length to
-     * keep the index small, and to make the results more meaningful)
+     * <p>(Implementations are likely to ignore prefixes under a certain length
+     * to keep the index small, and to make the results more meaningful)
      *
      * @param word word to process
      * @return the terms that should be added to the index for this word. May

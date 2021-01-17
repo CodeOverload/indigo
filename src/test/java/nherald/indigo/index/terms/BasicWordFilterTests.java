@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class BasicWordFilterTests
+class BasicWordFilterTests
 {
     @Test
     void sanitise_removesSpecialCharacters()
@@ -81,40 +81,14 @@ public class BasicWordFilterTests
     }
 
     @Test
-    void ngram_whenTermLongerThan3Characters()
-    {
-        final BasicWordFilter subject = new BasicWordFilter(false);
-
-        final List<String> actual = subject.ngram("pancetta")
-            .collect(Collectors.toList());
-
-        final List<String> expected = List.of("pan", "panc", "pance", "pancet", "pancett", "pancetta");
-
-        Assertions.assertEquals(expected, actual);
-    }
-
-    @Test
-    void ngram_whenTerm3CharactersLong()
-    {
-        final BasicWordFilter subject = new BasicWordFilter(false);
-
-        final List<String> actual = subject.ngram("mop")
-            .collect(Collectors.toList());
-
-        final List<String> expected = List.of("mop");
-
-        Assertions.assertEquals(expected, actual);
-    }
-
-    @Test
-    void process_sanitiseAndNgram()
+    void process_sanitise()
     {
         final BasicWordFilter subject = new BasicWordFilter(true);
 
         final List<String> actual = subject.process("o'neill")
             .collect(Collectors.toList());
 
-        final List<String> expected = List.of("one", "onei", "oneil", "oneill");
+        final List<String> expected = List.of("oneill");
 
         Assertions.assertEquals(expected, actual);
     }

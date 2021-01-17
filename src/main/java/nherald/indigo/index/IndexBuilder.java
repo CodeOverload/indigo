@@ -2,7 +2,9 @@ package nherald.indigo.index;
 
 import nherald.indigo.Entity;
 import nherald.indigo.index.terms.BasicWordFilter;
+import nherald.indigo.index.terms.PrefixWordSelector;
 import nherald.indigo.index.terms.WordFilter;
+import nherald.indigo.index.terms.WordSelector;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.StoreReadOps;
 
@@ -11,6 +13,7 @@ public class IndexBuilder<T extends Entity>
     private String id;
     private IndexTarget<T> target;
     private WordFilter wordFilter;
+    private WordSelector wordSelector;
     private StoreReadOps store;
 
     public IndexBuilder(String id)
@@ -32,6 +35,12 @@ public class IndexBuilder<T extends Entity>
     public IndexBuilder<T> wordFilter(WordFilter wordFilter)
     {
         this.wordFilter = wordFilter;
+        return this;
+    }
+
+    public IndexBuilder<T> wordSelector(WordSelector wordSelector)
+    {
+        this.wordSelector = wordSelector;
         return this;
     }
 
@@ -58,6 +67,11 @@ public class IndexBuilder<T extends Entity>
             wordFilter = new BasicWordFilter(false);
         }
 
-        return new Index<>(id, target, wordFilter, store);
+        if (wordSelector == null)
+        {
+            wordSelector = new PrefixWordSelector();
+        }
+
+        return new Index<>(id, target, wordFilter, wordSelector, store);
     }
 }

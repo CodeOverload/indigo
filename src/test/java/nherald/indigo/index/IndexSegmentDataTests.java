@@ -56,6 +56,16 @@ class IndexSegmentDataTests
     }
 
     @Test
+    void getWords_returnsAllWords()
+    {
+        final List<String> actual = sort(subject.allWords());
+
+        final List<String> expected = List.of("butterfly", "eagle", "gopher", "ostrich");
+
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
     void add_addsEntity_whenWordNotInSegment()
     {
         subject.add("butterfly", 7);
@@ -120,7 +130,7 @@ class IndexSegmentDataTests
         Assertions.assertEquals(List.of(8l), actual);
     }
 
-    private List<Long> sort(Collection<Long> collection)
+    private <T> List<T> sort(Collection<T> collection)
     {
         return collection.stream()
             .sorted()

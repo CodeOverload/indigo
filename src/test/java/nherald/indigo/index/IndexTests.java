@@ -16,7 +16,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.Mockito.*;
 
+import nherald.indigo.index.terms.ExactWordSelector;
 import nherald.indigo.index.terms.WordFilter;
+import nherald.indigo.index.terms.WordSelector;
 import nherald.indigo.store.StoreException;
 import nherald.indigo.store.StoreReadOps;
 import nherald.indigo.store.uow.Transaction;
@@ -32,6 +34,8 @@ class IndexTests
 
     private WordFilter wordFilter;
 
+    private WordSelector wordSelector;
+
     @Mock
     private Transaction transaction;
 
@@ -46,7 +50,12 @@ class IndexTests
         // Very basic implementation that should suffice for most tests
         wordFilter = word -> Stream.of(word.toLowerCase());
 
-        subject = new Index<>("name", entity -> "", wordFilter, store);
+        // Look up the words from the index segments exactly as they are
+        // specified
+        wordSelector = new ExactWordSelector();
+
+        subject = new Index<>("name", entity -> "", wordFilter, wordSelector,
+            store);
     }
 
     @Test
@@ -98,6 +107,14 @@ class IndexTests
         final Set<Long> expected = Set.of();
 
         Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    void get_whenTermIsTooShort()
+    {
+        Assertions.assertThrows(StoreException.class, () -> {
+            subject.get("p"); // Must be at least 2 characters long
+        });
     }
 
     @Test
@@ -332,7 +349,7 @@ class IndexTests
         // Hypothetical filter that always returns the same two words
         wordFilter = word -> Stream.of("pancetta", "ravioli");
 
-        subject = new Index<>("name", entity -> "", wordFilter, store);
+        subject = new Index<>("name", entity -> "", wordFilter, wordSelector, store);
 
         subject.add(List.of("pantha"), 8l, transaction);
 

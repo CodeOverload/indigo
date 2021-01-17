@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import nherald.indigo.Entity;
 import nherald.indigo.helpers.IdHelpers;
 import nherald.indigo.index.terms.WordFilter;
+import nherald.indigo.index.terms.WordSelector;
+import nherald.indigo.store.StoreException;
 import nherald.indigo.store.StoreReadOps;
 import nherald.indigo.store.uow.Transaction;
 
@@ -28,20 +30,11 @@ import nherald.indigo.store.uow.Transaction;
  * <p>Which denotes that entity 4 contains the word 'tiger', and entities
  * 60 and 43 contain the word 'panther'
  *
- * <p>Often an index will also contain ngrams (prefixes) so that the prefixes
- * can be searched
- *
- * <p>Example of the above index, with ngrams:
- * <ul>
- * <li>tiger -> 4
- * <li>tige -> 4
- * <li>tig -> 4
- * <li>panther -> 60, 43
- * <li>panthe -> 60, 43
- * <li>panth -> 60, 43
- * <li>pant -> 60, 43
- * <li>pan -> 60, 43
- * </ul>
+ * <p>The WordSelector dictates which words are looked up in the index for a
+ * given search term. A prefixing word selector (PrefixWordSelector) will allow
+ * the index to look up any words in the index that are prefixed by the given
+ * search term. An exact word selector (ExactWordSelector) means that the
+ * search term should match the words in the index exactly.
  *
  * <p>The index will be split over multiple documents (segments) in the store
  * so that no one document is too big. A segment is just a subset of the
@@ -51,17 +44,32 @@ public class Index<T extends Entity>
 {
     private static final String NAMESPACE = "indices";
 
+    /**
+     * The index is split into segments to reduce the size of the documents in
+     * the index (Firestore enforces a maximum document size). Each segment
+     * contains the words that start with a particular prefix; the prefix
+     * length determines what length word prefix is used when splitting into
+     * segments.
+     *
+     * <p>For example, given the words "pins", "pinstripe" and "parts". If the
+     * prefix length is 2, words will be divided into "pi" and "pa" segments.
+     * If the prefix length is 3; "pin" and "par"
+     */
+    private static final int PREFIX_LENGTH = 2;
+
     private final String id;
     private final IndexTarget<T> target;
     private final WordFilter wordFilter;
+    private final WordSelector wordSelector;
     private final StoreReadOps store;
 
-    Index(String id, IndexTarget<T> target,
-        WordFilter wordFilter, StoreReadOps store)
+    Index(String id, IndexTarget<T> target, WordFilter wordFilter,
+        WordSelector wordSelector, StoreReadOps store)
     {
         this.id = id;
         this.target = target;
         this.wordFilter = wordFilter;
+        this.wordSelector = wordSelector;
         this.store = store;
     }
 
@@ -80,6 +88,11 @@ public class Index<T extends Entity>
         return wordFilter;
     }
 
+    WordSelector getWordSelector()
+    {
+        return wordSelector;
+    }
+
     StoreReadOps getStore()
     {
         return store;
@@ -87,7 +100,14 @@ public class Index<T extends Entity>
 
     public Set<Long> get(String word)
     {
-        final IndexSegmentData segment = getSegmentForWord(word, store);
+        if (word == null || word.length() < PREFIX_LENGTH)
+        {
+            throw new StoreException("Search term is not long enough");
+        }
+
+        final IndexSegmentData segmentData = getSegmentForWord(word, store);
+
+        final IndexSegment segment = new IndexSegment(segmentData, wordSelector);
 
         return segment.get(word);
     }
@@ -158,7 +178,7 @@ public class Index<T extends Entity>
 
     private String getSegmentId(String word)
     {
-        final String segmentId = word.substring(0, 2);
+        final String segmentId = word.substring(0, PREFIX_LENGTH);
         return IdHelpers.validate(segmentId);
     }
 

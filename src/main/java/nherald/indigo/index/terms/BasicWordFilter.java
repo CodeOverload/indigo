@@ -12,7 +12,6 @@ import java.util.stream.Stream;
  *   3. Filter words that are too short (&lt; 3 characters)
  *   4. Filter words that start with a number
  *   5. Filter stop words (this is optional; can be switched on/off via ctor)
- *   6. Split the word into ngrams, 3+ characters long
  *
  * Example:
  *         INPUT: Tomato Bo O'Neill her 150ml
@@ -22,7 +21,6 @@ import java.util.stream.Stream;
  *              filter words that are too short: tomato, oneill, her, 150ml
  *              filter words not starting with alpha: tomato, oneill, her
  *              filter stop words: tomato, oneill
- *         ngram: tomato, tomat, toma, tom, oneill, oneil, onei, one
  *
  * When searching an index built using a particular word filter, the same
  * transformations should be applied to the search terms. E.g. if the search
@@ -30,11 +28,10 @@ import java.util.stream.Stream;
  * ever match anything in the index because the index only contains lower
  * case characters. There are some exceptions to this. For example, 'her' is
  * a stop word so won't be added to the index itself (if stop word filtering is
- * enabled). However, the word 'herta', has a prefix (ngram) of 'her', so
- * 'her' will appear in the index for cases when the word 'herta' was used.
- * Therefore, the stop word filter should never be applied to search terms
- * as it won't allow the client to search for 'herta' in this case, using the
- * prefix 'her'
+ * enabled). However, the word 'herta', has a prefix of 'her', so 'her' will
+ * appear in the index for cases when the word 'herta' was used. Therefore, the
+ * stop word filter should never be applied to search terms as it won't allow
+ * the client to search for 'herta' in this case, using the prefix 'her'
  */
 public class BasicWordFilter implements WordFilter
 {
@@ -62,18 +59,6 @@ public class BasicWordFilter implements WordFilter
         return isWordLongEnough(word) && wordStartsWithLetter(word);
     }
 
-    public Stream<String> ngram(String word)
-    {
-        final String[] result = new String[word.length() - 3 + 1];
-
-        for (int i = 0; i < result.length; ++i)
-        {
-            result[i] = word.substring(0, i + 3);
-        }
-
-        return Stream.of(result);
-    }
-
     private boolean isWordLongEnough(String word)
     {
         return word.length() > 2;
@@ -90,7 +75,6 @@ public class BasicWordFilter implements WordFilter
     {
         return Stream.of(word)
             .map(this::sanitise)
-            .filter(this::includeInIndex)
-            .flatMap(this::ngram);
+            .filter(this::includeInIndex);
     }
 }
