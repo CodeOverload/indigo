@@ -2,7 +2,6 @@ package nherald.indigo.index;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +10,7 @@ import java.util.stream.Collectors;
 
 import nherald.indigo.Entity;
 import nherald.indigo.helpers.IdHelpers;
+import nherald.indigo.helpers.MapHelpers;
 import nherald.indigo.index.terms.WordFilter;
 import nherald.indigo.index.terms.WordSelector;
 import nherald.indigo.store.StoreException;
@@ -224,22 +224,8 @@ public class Index<T extends Entity>
         final List<IndexSegmentData> segments = transaction.get(NAMESPACE,
             storeIds, IndexSegmentData.class);
 
-        final Map<String, IndexSegmentData> segmentMap = new HashMap<>();
-
-        for (int i = 0; i < segmentIds.size(); ++i)
-        {
-            final String segmentId = segmentIds.get(i);
-            IndexSegmentData segment = segments.get(i);
-
-            if (segment == null)
-            {
-                segment = new IndexSegmentData();
-            }
-
-            segmentMap.put(segmentId, segment);
-        }
-
-        return segmentMap;
+        return MapHelpers.asMap(segmentIds, segments,
+            segmentId -> new IndexSegmentData());
     }
 
     private Contents getContents(Transaction transaction)
