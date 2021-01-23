@@ -50,8 +50,6 @@ class PrefixWordSelectorTests
         Assertions.assertEquals(List.of(), actual);
     }
 
-    // TODO what if word is too short?
-
     private IndexSegmentData mockData()
     {
         final IndexSegmentData data = new IndexSegmentData();
