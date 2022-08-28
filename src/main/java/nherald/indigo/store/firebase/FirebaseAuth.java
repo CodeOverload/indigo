@@ -9,6 +9,16 @@ import com.google.firebase.FirebaseOptions;
 public class FirebaseAuth
 {
     /**
+     * Authorises using the default Google credentials for the environment. Should
+     * only be done once, before any firestore requests are made
+     * @throws FirebaseAuthException if there was an error reading credentials
+     */
+    public void authDefault()
+    {
+        FirebaseApp.initializeApp();
+    }
+
+    /**
      * Authorises against a firestore project. Should only be done once, before any firestore
      * requests are made
      * @param projectId GCP project id that contains the firestore database
@@ -16,7 +26,6 @@ public class FirebaseAuth
      */
     public void auth(String projectId)
     {
-        // One-time init of Firestore
         final GoogleCredentials credentials = getGoogleCredentials();
         final FirebaseOptions options = FirebaseOptions.builder()
             .setCredentials(credentials)
